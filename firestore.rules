@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // レビューデータ: 認証済みユーザーが自分のデータのみアクセス可能
+    match /reviews/{reviewId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+    }
+    
+    // 新しいレビューの作成
+    match /reviews/{reviewId} {
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // ユーザー設定データ (オプション)
+    match /users/{userId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId;
+    }
+    
+    // 統計データ (読み取り専用)
+    match /stats/{document} {
+      allow read: if request.auth != null;
+      allow write: if false; // 管理者のみ
+    }
+  }
+}

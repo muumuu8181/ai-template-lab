@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 Firebase アプリレビューツール</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; background: #f5f6fa; }
+        .container { display: flex; height: 100vh; }
+        .review-panel { width: 400px; background: #2f3542; color: white; padding: 20px; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #57606f; padding-bottom: 15px; }
+        .header h1 { font-size: 1.3rem; color: #5352ed; margin-bottom: 5px; }
+        .sync-status { font-size: 0.8rem; opacity: 0.8; margin-top: 5px; }
+        .sync-online { color: #2ed573; }
+        .sync-offline { color: #ff4757; }
+        .progress { background: #57606f; border-radius: 10px; height: 8px; margin: 10px 0; overflow: hidden; }
+        .progress-bar { background: linear-gradient(45deg, #5352ed, #3742fa); height: 100%; width: 0%; transition: width 0.3s ease; }
+        .app-info { background: #57606f; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .app-name { font-weight: bold; color: #5352ed; margin-bottom: 5px; word-break: break-all; }
+        .app-status { font-size: 0.9rem; opacity: 0.8; }
+        .rating-section { margin-bottom: 20px; }
+        .rating-title { font-weight: bold; margin-bottom: 10px; color: #a4b0be; }
+        .rating-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: #3d4454; border-radius: 8px; }
+        .rating-label { font-size: 0.9rem; }
+        .rating-buttons { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+        .rating-btn { width: 30px; height: 30px; border: none; border-radius: 50%; background: #57606f; color: white; font-size: 0.8rem; cursor: pointer; transition: all 0.2s ease; }
+        .rating-btn:hover { background: #5352ed; transform: scale(1.1); }
+        .rating-btn.active { background: #5352ed; box-shadow: 0 0 10px rgba(83, 82, 237, 0.5); }
+        .memo-section { margin-bottom: 20px; }
+        .memo-title { font-weight: bold; margin-bottom: 10px; color: #a4b0be; }
+        .memo-textarea { width: 100%; height: 120px; background: #3d4454; border: 1px solid #57606f; border-radius: 8px; color: white; padding: 12px; font-size: 0.9rem; resize: vertical; font-family: inherit; }
+        .memo-textarea:focus { outline: none; border-color: #5352ed; box-shadow: 0 0 0 2px rgba(83, 82, 237, 0.2); }
+        .button-section { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; font-size: 0.9rem; }
+        .btn-save { background: #2ed573; color: white; }
+        .btn-save:hover { background: #26d0ce; transform: translateY(-2px); }
+        .btn-next { background: #5352ed; color: white; }
+        .btn-next:hover { background: #3742fa; transform: translateY(-2px); }
+        .btn-prev { background: #747d8c; color: white; }
+        .btn-prev:hover { background: #57606f; transform: translateY(-2px); }
+        .stats-section { background: #3d4454; padding: 15px; border-radius: 10px; margin-top: 20px; }
+        .stats-title { font-weight: bold; margin-bottom: 10px; color: #a4b0be; }
+        .stats-item { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
+        .app-display { flex: 1; display: flex; flex-direction: column; background: white; }
+        .app-header { background: #2f3542; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .app-url { font-size: 0.9rem; opacity: 0.8; }
+        .app-controls { display: flex; gap: 10px; }
+        .control-btn { padding: 8px 15px; background: #5352ed; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+        .control-btn:hover { background: #3742fa; }
+        .app-frame { flex: 1; border: none; background: white; }
+        .loading { display: flex; justify-content: center; align-items: center; height: 100%; font-size: 1.2rem; color: #747d8c; }
+        .quick-rating { display: flex; gap: 10px; margin-top: 10px; }
+        .quick-btn { flex: 1; padding: 8px; border: none; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s ease; }
+        .quick-good { background: #2ed573; color: white; }
+        .quick-ok { background: #ffa502; color: white; }
+        .quick-bad { background: #ff4757; color: white; }
+        .quick-btn:hover { transform: scale(1.05); }
+        
+        /* 認証セクション */
+        .auth-section { background: #3742fa; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .auth-section h3 { margin-bottom: 15px; text-align: center; }
+        .auth-methods { display: flex; flex-direction: column; gap: 10px; }
+        .auth-btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .google-btn { background: #4285f4; color: white; }
+        .google-btn:hover { background: #3367d6; }
+        .anon-btn { background: #57606f; color: white; }
+        .anon-btn:hover { background: #3d4454; }
+        .email-btn { background: #2ed573; color: white; }
+        .email-btn:hover { background: #26d0ce; }
+        
+        .email-form { display: none; margin-top: 10px; }
+        .email-form input { width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 5px; font-size: 0.9rem; }
+        .email-form button { width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 5px; background: #2ed573; color: white; cursor: pointer; font-weight: bold; }
+        
+        .user-info { background: #2ed573; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 10px; }
+        .user-name { font-weight: bold; margin-bottom: 10px; }
+        .logout-btn { background: #ff4757; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+        .logout-btn:hover { background: #ff3838; }
+        
+        @media (max-width: 768px) { 
+            .container { flex-direction: column; } 
+            .review-panel { width: 100%; height: 40vh; } 
+            .app-display { height: 60vh; } 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="review-panel">
+            <div class="header">
+                <h1>🔥 Firebase レビューツール</h1>
+                <div class="sync-status" id="syncStatus">
+                    <span class="sync-offline">⚪ 接続中...</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div id="progressText">0 / 0 完了</div>
+            </div>
+
+            <!-- 認証セクション -->
+            <div class="auth-section" id="authSection">
+                <h3>🔐 ログインして始める</h3>
+                <div class="auth-methods">
+                    <button class="auth-btn google-btn" onclick="signInWithGoogle()">
+                        🔵 Googleで続行
+                    </button>
+                    <button class="auth-btn email-btn" onclick="toggleEmailForm()">
+                        📧 メール / パスワード
+                    </button>
+                    <button class="auth-btn anon-btn" onclick="signInAnonymously()">
+                        👤 ゲストとして始める
+                    </button>
+                </div>
+                
+                <div class="email-form" id="emailForm">
+                    <input type="email" id="email" placeholder="メールアドレス">
+                    <input type="password" id="password" placeholder="パスワード">
+                    <button onclick="signUp()">📝 新規登録</button>
+                    <button onclick="signIn()">🔑 ログイン</button>
+                </div>
+            </div>
+
+            <!-- ユーザー情報 -->
+            <div class="user-info" id="userInfo" style="display: none;">
+                <img id="userAvatar" class="user-avatar" style="display: none;">
+                <div class="user-name" id="userDisplay"></div>
+                <button class="logout-btn" onclick="signOut()">ログアウト</button>
+            </div>
+
+            <div class="app-info">
+                <div class="app-name" id="currentAppName">アプリを読み込み中...</div>
+                <div class="app-status" id="currentAppStatus">状態: 確認中</div>
+            </div>
+
+            <div class="rating-section">
+                <div class="rating-title">⚡ クイック評価</div>
+                <div class="quick-rating">
+                    <button class="quick-btn quick-good" onclick="quickRating('good')">👍 Good</button>
+                    <button class="quick-btn quick-ok" onclick="quickRating('ok')">👌 OK</button>
+                    <button class="quick-btn quick-bad" onclick="quickRating('bad')">👎 Bad</button>
+                </div>
+            </div>
+
+            <div class="rating-section">
+                <div class="rating-title">📊 詳細評価 (10点満点)</div>
+                <div class="rating-item">
+                    <span class="rating-label">🎨 デザイン</span>
+                    <div class="rating-buttons" id="designRating"></div>
+                </div>
+                <div class="rating-item">
+                    <span class="rating-label">⚙️ 機能性</span>
+                    <div class="rating-buttons" id="functionalityRating"></div>
+                </div>
+                <div class="rating-item">
+                    <span class="rating-label">🖱️ 使いやすさ</span>
+                    <div class="rating-buttons" id="usabilityRating"></div>
+                </div>
+                <div class="rating-item">
+                    <span class="rating-label">⚡ パフォーマンス</span>
+                    <div class="rating-buttons" id="performanceRating"></div>
+                </div>
+            </div>
+
+            <div class="memo-section">
+                <div class="memo-title">📝 メモ・感想</div>
+                <textarea class="memo-textarea" id="memoTextarea" placeholder="このアプリについての感想、改善点、気づいたことなどを自由に記入してください..."></textarea>
+            </div>
+
+            <div class="button-section">
+                <button class="btn btn-prev" onclick="previousApp()">◀ 前へ</button>
+                <button class="btn btn-save" onclick="saveReview()">💾 保存</button>
+                <button class="btn btn-next" onclick="nextApp()">次へ ▶</button>
+            </div>
+
+            <div class="stats-section">
+                <div class="stats-title">📈 レビュー統計</div>
+                <div class="stats-item"><span>レビュー済み:</span><span id="reviewedCount">0個</span></div>
+                <div class="stats-item"><span>平均デザイン:</span><span id="avgDesign">-</span></div>
+                <div class="stats-item"><span>平均機能性:</span><span id="avgFunctionality">-</span></div>
+                <div class="stats-item"><span>Good評価:</span><span id="goodCount">0個</span></div>
+            </div>
+        </div>
+
+        <div class="app-display">
+            <div class="app-header">
+                <div>
+                    <div id="headerAppName">アプリ名</div>
+                    <div class="app-url" id="headerAppUrl">URL</div>
+                </div>
+                <div class="app-controls">
+                    <button class="control-btn" onclick="reloadApp()">🔄 リロード</button>
+                    <button class="control-btn" onclick="openInNewTab()">🔗 新しいタブで開く</button>
+                </div>
+            </div>
+            <iframe id="appFrame" class="app-frame" src="" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-popups-to-escape-sandbox"></iframe>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Firebase設定（GitHub Pages用 - あなたのFirebaseプロジェクトの設定に置き換えてください）
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, doc, setDoc, onSnapshot, query, where, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // 📋 Firebase設定例 - あなたのプロジェクト設定に置き換えてください
+        const firebaseConfig = {
+            // ⚠️ ここにあなたのFirebase設定を入力してください
+            apiKey: "your-api-key-here",
+            authDomain: "your-project.firebaseapp.com", 
+            databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef123456"
+        };
+
+        // Firebase初期化
+        let app, auth, db, database;
+        let isFirebaseConnected = false;
+        let currentUser = null;
+
+        // グローバル変数
+        let apps = [];
+        let currentIndex = 0;
+        let reviews = {};
+
+        // Firebase初期化とエラーハンドリング
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            database = getDatabase(app);
+            isFirebaseConnected = true;
+            console.log('🔥 Firebase接続成功');
+            
+            // 接続状態監視
+            const connectedRef = ref(database, '.info/connected');
+            onValue(connectedRef, (snap) => {
+                const isOnline = snap.val() === true;
+                const statusEl = document.getElementById('syncStatus');
+                if (statusEl) {
+                    statusEl.innerHTML = isOnline 
+                        ? '<span class="sync-online">🟢 オンライン同期</span>'
+                        : '<span class="sync-offline">⚪ オフライン</span>';
+                }
+            });
+            
+        } catch (error) {
+            console.error('❌ Firebase接続エラー:', error);
+            document.getElementById('syncStatus').innerHTML = '<span class="sync-offline">⚠️ Firebase未設定</span>';
+            document.getElementById('authSection').innerHTML = `
+                <h3>⚠️ Firebase設定が必要です</h3>
+                <p>index.html内のfirebaseConfigを設定してください</p>
+                <details style="margin-top: 10px; color: #ddd;">
+                    <summary>設定手順</summary>
+                    <ol style="margin: 10px 0; padding-left: 20px; font-size: 0.8rem;">
+                        <li>Firebase Console でプロジェクト作成</li>
+                        <li>Authentication で Google認証を有効化</li>
+                        <li>Firestore Database 作成</li>
+                        <li>Realtime Database 作成</li>
+                        <li>プロジェクト設定からConfig取得</li>
+                    </ol>
+                </details>`;
+        }
+
+        // 認証関数
+        window.signInWithGoogle = async function() {
+            if (!isFirebaseConnected) {
+                alert('Firebase設定が必要です');
+                return;
+            }
+
+            const provider = new GoogleAuthProvider();
+            provider.addScope('profile');
+            provider.addScope('email');
+            
+            try {
+                const result = await signInWithPopup(auth, provider);
+                console.log('✅ Google認証成功:', result.user.displayName);
+            } catch (error) {
+                console.error('❌ Google認証エラー:', error);
+                if (error.code === 'auth/popup-closed-by-user') {
+                    alert('認証がキャンセルされました');
+                } else if (error.code === 'auth/popup-blocked') {
+                    alert('ポップアップがブロックされました。ポップアップを許可してください。');
+                } else {
+                    alert('Google認証エラー: ' + error.message);
+                }
+            }
+        };
+
+        window.toggleEmailForm = function() {
+            const form = document.getElementById('emailForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        };
+
+        window.signUp = async function() {
+            if (!isFirebaseConnected) {
+                alert('Firebase設定が必要です');
+                return;
+            }
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                alert('メールアドレスとパスワードを入力してください');
+                return;
+            }
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                console.log('✅ 登録成功:', userCredential.user.email);
+                document.getElementById('emailForm').style.display = 'none';
+            } catch (error) {
+                console.error('❌ 登録エラー:', error);
+                alert('登録エラー: ' + error.message);
+            }
+        };
+
+        window.signIn = async function() {
+            if (!isFirebaseConnected) {
+                alert('Firebase設定が必要です');
+                return;
+            }
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                alert('メールアドレスとパスワードを入力してください');
+                return;
+            }
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                console.log('✅ ログイン成功:', userCredential.user.email);
+                document.getElementById('emailForm').style.display = 'none';
+            } catch (error) {
+                console.error('❌ ログインエラー:', error);
+                alert('ログインエラー: ' + error.message);
+            }
+        };
+
+        window.signInAnonymously = async function() {
+            if (!isFirebaseConnected) {
+                alert('Firebase設定が必要です');
+                return;
+            }
+
+            try {
+                const userCredential = await signInAnonymously(auth);
+                console.log('✅ ゲストログイン成功');
+            } catch (error) {
+                console.error('❌ ゲストログインエラー:', error);
+                alert('ゲストログインエラー: ' + error.message);
+            }
+        };
+
+        window.signOut = async function() {
+            if (!isFirebaseConnected) return;
+
+            try {
+                await firebaseSignOut(auth);
+                console.log('✅ ログアウト成功');
+            } catch (error) {
+                console.error('❌ ログアウトエラー:', error);
+            }
+        };
+
+        // 認証状態監視
+        if (isFirebaseConnected) {
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if (user) {
+                    document.getElementById('authSection').style.display = 'none';
+                    document.getElementById('userInfo').style.display = 'block';
+                    
+                    // ユーザー情報表示
+                    const displayName = user.isAnonymous ? 'ゲストユーザー' : 
+                        (user.displayName || user.email || 'ユーザー');
+                    document.getElementById('userDisplay').textContent = displayName;
+                    
+                    // Googleアバター表示
+                    if (user.photoURL) {
+                        const avatar = document.getElementById('userAvatar');
+                        avatar.src = user.photoURL;
+                        avatar.style.display = 'block';
+                    }
+                    
+                    loadFirebaseReviews();
+                } else {
+                    document.getElementById('authSection').style.display = 'block';
+                    document.getElementById('userInfo').style.display = 'none';
+                    reviews = {};
+                }
+            });
+        }
+
+        // Firebaseからレビューデータ読み込み
+        async function loadFirebaseReviews() {
+            if (!isFirebaseConnected || !currentUser) return;
+
+            try {
+                const reviewsRef = collection(db, 'reviews');
+                const q = query(reviewsRef, where('userId', '==', currentUser.uid));
+                
+                onSnapshot(q, (querySnapshot) => {
+                    reviews = {};
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        reviews[data.appName] = data;
+                    });
+                    console.log('📊 Firebaseレビューデータ読み込み完了:', Object.keys(reviews).length);
+                    updateStats();
+                    if (currentIndex >= 0) loadCurrentReview();
+                });
+            } catch (error) {
+                console.error('❌ Firebaseレビュー読み込みエラー:', error);
+            }
+        }
+
+        // Firebaseにレビューデータ保存
+        async function saveFirebaseReview(appName, reviewData) {
+            if (!isFirebaseConnected || !currentUser) return false;
+
+            try {
+                const reviewDoc = {
+                    userId: currentUser.uid,
+                    appName: appName,
+                    ...reviewData,
+                    timestamp: new Date().toISOString(),
+                    updatedAt: serverTimestamp(),
+                    deviceInfo: navigator.userAgent
+                };
+
+                await setDoc(doc(db, 'reviews', `${currentUser.uid}_${appName}`), reviewDoc);
+                console.log('💾 Firebase保存成功:', appName);
+                return true;
+            } catch (error) {
+                console.error('❌ Firebase保存エラー:', error);
+                return false;
+            }
+        }
+
+        // アプリデータ（埋め込み版 - CORS回避用）
+        const appData = {
+          "timestamp": "2025-07-27T15:05:57.228Z",
+          "repository": "muumuu8181/published-apps",
+          "summary": {
+            "total": 152,
+            "accessible": 107,
+            "inaccessible": 45,
+            "successRate": 70.4
+          },
+          "apps": [
+            {"appName": "app-0000001-297gku", "url": "https://muumuu8181.github.io/published-apps/app-0000001-297gku/", "status": 200, "accessible": true, "responseTime": 1262},
+            {"appName": "app-0000001-2k6sxh", "url": "https://muumuu8181.github.io/published-apps/app-0000001-2k6sxh/", "status": 200, "accessible": true, "responseTime": 1261},
+            {"appName": "app-0000001-34xzgi", "url": "https://muumuu8181.github.io/published-apps/app-0000001-34xzgi/", "status": 200, "accessible": true, "responseTime": 1262},
+            {"appName": "app-0000001-3fmmt2", "url": "https://muumuu8181.github.io/published-apps/app-0000001-3fmmt2/", "status": 200, "accessible": true, "responseTime": 1257},
+            {"appName": "app-0000001-44kiri", "url": "https://muumuu8181.github.io/published-apps/app-0000001-44kiri/", "status": 200, "accessible": true, "responseTime": 1254},
+            {"appName": "app-0000001-4ijs4a", "url": "https://muumuu8181.github.io/published-apps/app-0000001-4ijs4a/", "status": 200, "accessible": true, "responseTime": 1254},
+            {"appName": "app-0000001-6njwdc", "url": "https://muumuu8181.github.io/published-apps/app-0000001-6njwdc/", "status": 200, "accessible": true, "responseTime": 1252},
+            {"appName": "app-0000001-78vfe5", "url": "https://muumuu8181.github.io/published-apps/app-0000001-78vfe5/", "status": 200, "accessible": true, "responseTime": 1249},
+            {"appName": "app-0000001-7uibj5", "url": "https://muumuu8181.github.io/published-apps/app-0000001-7uibj5/", "status": 200, "accessible": true, "responseTime": 1250},
+            {"appName": "app-0000001-87da9z", "url": "https://muumuu8181.github.io/published-apps/app-0000001-87da9z/", "status": 200, "accessible": true, "responseTime": 1247},
+            {"appName": "app-0000001-9aejjc", "url": "https://muumuu8181.github.io/published-apps/app-0000001-9aejjc/", "status": 200, "accessible": true, "responseTime": 1246},
+            {"appName": "app-0000001-bsczu4", "url": "https://muumuu8181.github.io/published-apps/app-0000001-bsczu4/", "status": 200, "accessible": true, "responseTime": 1251},
+            {"appName": "app-0000001-cadpz7", "url": "https://muumuu8181.github.io/published-apps/app-0000001-cadpz7/", "status": 200, "accessible": true, "responseTime": 1245},
+            {"appName": "app-0000001-dj6v83", "url": "https://muumuu8181.github.io/published-apps/app-0000001-dj6v83/", "status": 200, "accessible": true, "responseTime": 1242},
+            {"appName": "app-0000001-ey24j7", "url": "https://muumuu8181.github.io/published-apps/app-0000001-ey24j7/", "status": 200, "accessible": true, "responseTime": 1243},
+            {"appName": "app-0000001-gcvh9i", "url": "https://muumuu8181.github.io/published-apps/app-0000001-gcvh9i/", "status": 200, "accessible": true, "responseTime": 1243},
+            {"appName": "app-0000001-hfkvcy", "url": "https://muumuu8181.github.io/published-apps/app-0000001-hfkvcy/", "status": 200, "accessible": true, "responseTime": 1241},
+            {"appName": "app-0000001-hk5y4j", "url": "https://muumuu8181.github.io/published-apps/app-0000001-hk5y4j/", "status": 200, "accessible": true, "responseTime": 1239},
+            {"appName": "app-0000001-jzh3gm", "url": "https://muumuu8181.github.io/published-apps/app-0000001-jzh3gm/", "status": 200, "accessible": true, "responseTime": 1237},
+            {"appName": "app-0000001-mjgixu", "url": "https://muumuu8181.github.io/published-apps/app-0000001-mjgixu/", "status": 200, "accessible": true, "responseTime": 1236},
+            {"appName": "app-0000001-pg4mcs", "url": "https://muumuu8181.github.io/published-apps/app-0000001-pg4mcs/", "status": 200, "accessible": true, "responseTime": 1235},
+            {"appName": "app-0000001-qz5eeg", "url": "https://muumuu8181.github.io/published-apps/app-0000001-qz5eeg/", "status": 200, "accessible": true, "responseTime": 1234},
+            {"appName": "app-0000001-twcf8h", "url": "https://muumuu8181.github.io/published-apps/app-0000001-twcf8h/", "status": 200, "accessible": true, "responseTime": 1233},
+            {"appName": "app-0000001-wh29mt", "url": "https://muumuu8181.github.io/published-apps/app-0000001-wh29mt/", "status": 200, "accessible": true, "responseTime": 1234},
+            {"appName": "app-0000001-z8kycr", "url": "https://muumuu8181.github.io/published-apps/app-0000001-z8kycr/", "status": 200, "accessible": true, "responseTime": 1232},
+            {"appName": "app-00000014-37644l5uh", "url": "https://muumuu8181.github.io/published-apps/app-00000014-37644l5uh/", "status": 200, "accessible": true, "responseTime": 1231},
+            {"appName": "app-00000015-37037qtvt", "url": "https://muumuu8181.github.io/published-apps/app-00000015-37037qtvt/", "status": 200, "accessible": true, "responseTime": 1231},
+            {"appName": "app-00000016-35196hxja", "url": "https://muumuu8181.github.io/published-apps/app-00000016-35196hxja/", "status": 200, "accessible": true, "responseTime": 1229},
+            {"appName": "app-0000002-4ghvmz", "url": "https://muumuu8181.github.io/published-apps/app-0000002-4ghvmz/", "status": 200, "accessible": true, "responseTime": 1228},
+            {"appName": "app-0000002-6992ec", "url": "https://muumuu8181.github.io/published-apps/app-0000002-6992ec/", "status": 200, "accessible": true, "responseTime": 1227},
+            {"appName": "app-0000002-9ai2mz", "url": "https://muumuu8181.github.io/published-apps/app-0000002-9ai2mz/", "status": 200, "accessible": true, "responseTime": 1227},
+            {"appName": "app-0000002-asnmhg", "url": "https://muumuu8181.github.io/published-apps/app-0000002-asnmhg/", "status": 200, "accessible": true, "responseTime": 1226},
+            {"appName": "app-0000002-b5298s", "url": "https://muumuu8181.github.io/published-apps/app-0000002-b5298s/", "status": 200, "accessible": true, "responseTime": 1213},
+            {"appName": "app-0000002-gzcxia", "url": "https://muumuu8181.github.io/published-apps/app-0000002-gzcxia/", "status": 200, "accessible": true, "responseTime": 1212},
+            {"appName": "app-0000002-jvi6gp", "url": "https://muumuu8181.github.io/published-apps/app-0000002-jvi6gp/", "status": 200, "accessible": true, "responseTime": 1210},
+            {"appName": "app-0000003-9cr3vy", "url": "https://muumuu8181.github.io/published-apps/app-0000003-9cr3vy/", "status": 200, "accessible": true, "responseTime": 1208},
+            {"appName": "app-0000003-nttm2g", "url": "https://muumuu8181.github.io/published-apps/app-0000003-nttm2g/", "status": 200, "accessible": true, "responseTime": 1206},
+            {"appName": "app-0000003-pybb34", "url": "https://muumuu8181.github.io/published-apps/app-0000003-pybb34/", "status": 200, "accessible": true, "responseTime": 1205},
+            {"appName": "app-0000003-qxhvcj", "url": "https://muumuu8181.github.io/published-apps/app-0000003-qxhvcj/", "status": 200, "accessible": true, "responseTime": 1199},
+            {"appName": "app-0000003-xdrim4", "url": "https://muumuu8181.github.io/published-apps/app-0000003-xdrim4/", "status": 200, "accessible": true, "responseTime": 1196},
+            {"appName": "app-0000004-d9j7b6", "url": "https://muumuu8181.github.io/published-apps/app-0000004-d9j7b6/", "status": 200, "accessible": true, "responseTime": 1181},
+            {"appName": "app-0000004-gfwxag", "url": "https://muumuu8181.github.io/published-apps/app-0000004-gfwxag/", "status": 200, "accessible": true, "responseTime": 1182},
+            {"appName": "app-0000004-pqtec8", "url": "https://muumuu8181.github.io/published-apps/app-0000004-pqtec8/", "status": 200, "accessible": true, "responseTime": 1180},
+            {"appName": "app-0000004-wssf74", "url": "https://muumuu8181.github.io/published-apps/app-0000004-wssf74/", "status": 200, "accessible": true, "responseTime": 1179},
+            {"appName": "app-00000040-gtqty9", "url": "https://muumuu8181.github.io/published-apps/app-00000040-gtqty9/", "status": 200, "accessible": true, "responseTime": 1176},
+            {"appName": "app-0000005-68637", "url": "https://muumuu8181.github.io/published-apps/app-0000005-68637/", "status": 200, "accessible": true, "responseTime": 1176},
+            {"appName": "app-0000005-pcgmr5", "url": "https://muumuu8181.github.io/published-apps/app-0000005-pcgmr5/", "status": 200, "accessible": true, "responseTime": 1172},
+            {"appName": "app-0000005-q594nt", "url": "https://muumuu8181.github.io/published-apps/app-0000005-q594nt/", "status": 200, "accessible": true, "responseTime": 1172},
+            {"appName": "app-0000006-bamb00", "url": "https://muumuu8181.github.io/published-apps/app-0000006-bamb00/", "status": 200, "accessible": true, "responseTime": 1169},
+            {"appName": "app-0000006-vvdeak", "url": "https://muumuu8181.github.io/published-apps/app-0000006-vvdeak/", "status": 200, "accessible": true, "responseTime": 1166},
+            {"appName": "app-0000012-v55yyb", "url": "https://muumuu8181.github.io/published-apps/app-0000012-v55yyb/", "status": 200, "accessible": true, "responseTime": 1149},
+            {"appName": "app-0000013-26a2qi", "url": "https://muumuu8181.github.io/published-apps/app-0000013-26a2qi/", "status": 200, "accessible": true, "responseTime": 1149},
+            {"appName": "app-0000013-36314korg", "url": "https://muumuu8181.github.io/published-apps/app-0000013-36314korg/", "status": 200, "accessible": true, "responseTime": 1148},
+            {"appName": "app-0000016-ixr5jz", "url": "https://muumuu8181.github.io/published-apps/app-0000016-ixr5jz/", "status": 200, "accessible": true, "responseTime": 1151},
+            {"appName": "app-0000017-k7x9m2", "url": "https://muumuu8181.github.io/published-apps/app-0000017-k7x9m2/", "status": 200, "accessible": true, "responseTime": 1147},
+            {"appName": "app-0000018-m9x3k2", "url": "https://muumuu8181.github.io/published-apps/app-0000018-m9x3k2/", "status": 200, "accessible": true, "responseTime": 1147},
+            {"appName": "app-0000019-x7k9p3", "url": "https://muumuu8181.github.io/published-apps/app-0000019-x7k9p3/", "status": 200, "accessible": true, "responseTime": 1144},
+            {"appName": "app-0000020-y8m5n4", "url": "https://muumuu8181.github.io/published-apps/app-0000020-y8m5n4/", "status": 200, "accessible": true, "responseTime": 1140},
+            {"appName": "app-0000021-r5x8k2", "url": "https://muumuu8181.github.io/published-apps/app-0000021-r5x8k2/", "status": 200, "accessible": true, "responseTime": 1131},
+            {"appName": "app-0000022-w9p4n6", "url": "https://muumuu8181.github.io/published-apps/app-0000022-w9p4n6/", "status": 200, "accessible": true, "responseTime": 1129},
+            {"appName": "app-0000023-t2m7q1", "url": "https://muumuu8181.github.io/published-apps/app-0000023-t2m7q1/", "status": 200, "accessible": true, "responseTime": 1128},
+            {"appName": "app-0000024-x5k8m3", "url": "https://muumuu8181.github.io/published-apps/app-0000024-x5k8m3/", "status": 200, "accessible": true, "responseTime": 1126},
+            {"appName": "app-0000025-g3n7k9", "url": "https://muumuu8181.github.io/published-apps/app-0000025-g3n7k9/", "status": 200, "accessible": true, "responseTime": 1123},
+            {"appName": "app-0000026-j2m8r5", "url": "https://muumuu8181.github.io/published-apps/app-0000026-j2m8r5/", "status": 200, "accessible": true, "responseTime": 1121},
+            {"appName": "app-0000027-p7x2n9", "url": "https://muumuu8181.github.io/published-apps/app-0000027-p7x2n9/", "status": 200, "accessible": true, "responseTime": 1118},
+            {"appName": "app-0000028-k5m8w3", "url": "https://muumuu8181.github.io/published-apps/app-0000028-k5m8w3/", "status": 200, "accessible": true, "responseTime": 1114},
+            {"appName": "app-0000029-t9r4j6", "url": "https://muumuu8181.github.io/published-apps/app-0000029-t9r4j6/", "status": 200, "accessible": true, "responseTime": 1113},
+            {"appName": "app-0000030-q7d5p2", "url": "https://muumuu8181.github.io/published-apps/app-0000030-q7d5p2/", "status": 200, "accessible": true, "responseTime": 1109},
+            {"appName": "app-0000040-nhg4sa", "url": "https://muumuu8181.github.io/published-apps/app-0000040-nhg4sa/", "status": 200, "accessible": true, "responseTime": 1104},
+            {"appName": "app-001-2ba5vb", "url": "https://muumuu8181.github.io/published-apps/app-001-2ba5vb/", "status": 200, "accessible": true, "responseTime": 1105},
+            {"appName": "app-001-7g5f2h", "url": "https://muumuu8181.github.io/published-apps/app-001-7g5f2h/", "status": 200, "accessible": true, "responseTime": 1103},
+            {"appName": "app-001-9445m7", "url": "https://muumuu8181.github.io/published-apps/app-001-9445m7/", "status": 200, "accessible": true, "responseTime": 1101},
+            {"appName": "app-001-auctrh", "url": "https://muumuu8181.github.io/published-apps/app-001-auctrh/", "status": 200, "accessible": true, "responseTime": 1100},
+            {"appName": "app-001-c5qw5s", "url": "https://muumuu8181.github.io/published-apps/app-001-c5qw5s/", "status": 200, "accessible": true, "responseTime": 1099},
+            {"appName": "app-001-cunsq6", "url": "https://muumuu8181.github.io/published-apps/app-001-cunsq6/", "status": 200, "accessible": true, "responseTime": 1098},
+            {"appName": "app-001-cw7bpy", "url": "https://muumuu8181.github.io/published-apps/app-001-cw7bpy/", "status": 200, "accessible": true, "responseTime": 1098},
+            {"appName": "app-001-f24wut", "url": "https://muumuu8181.github.io/published-apps/app-001-f24wut/", "status": 200, "accessible": true, "responseTime": 1096},
+            {"appName": "app-001-ffuw7m", "url": "https://muumuu8181.github.io/published-apps/app-001-ffuw7m/", "status": 200, "accessible": true, "responseTime": 1096},
+            {"appName": "app-001-gpie24", "url": "https://muumuu8181.github.io/published-apps/app-001-gpie24/", "status": 200, "accessible": true, "responseTime": 1115},
+            {"appName": "app-001-md6m7t", "url": "https://muumuu8181.github.io/published-apps/app-001-md6m7t/", "status": 200, "accessible": true, "responseTime": 1122},
+            {"appName": "app-001-nmbiyr", "url": "https://muumuu8181.github.io/published-apps/app-001-nmbiyr/", "status": 200, "accessible": true, "responseTime": 1119},
+            {"appName": "app-001-r4keva", "url": "https://muumuu8181.github.io/published-apps/app-001-r4keva/", "status": 200, "accessible": true, "responseTime": 1145},
+            {"appName": "app-001-skbky7", "url": "https://muumuu8181.github.io/published-apps/app-001-skbky7/", "status": 200, "accessible": true, "responseTime": 1089},
+            {"appName": "app-001-sqnkjv", "url": "https://muumuu8181.github.io/published-apps/app-001-sqnkjv/", "status": 200, "accessible": true, "responseTime": 1143},
+            {"appName": "app-001-w4px6m", "url": "https://muumuu8181.github.io/published-apps/app-001-w4px6m/", "status": 200, "accessible": true, "responseTime": 1162},
+            {"appName": "app-001-yu4hsr", "url": "https://muumuu8181.github.io/published-apps/app-001-yu4hsr/", "status": 200, "accessible": true, "responseTime": 1115},
+            {"appName": "app-002-7k55w2", "url": "https://muumuu8181.github.io/published-apps/app-002-7k55w2/", "status": 200, "accessible": true, "responseTime": 1229},
+            {"appName": "app-002-m5si46", "url": "https://muumuu8181.github.io/published-apps/app-002-m5si46/", "status": 200, "accessible": true, "responseTime": 1102},
+            {"appName": "app-003-thqdtb", "url": "https://muumuu8181.github.io/published-apps/app-003-thqdtb/", "status": 200, "accessible": true, "responseTime": 1135},
+            {"appName": "app-003-v6z6mv", "url": "https://muumuu8181.github.io/published-apps/app-003-v6z6mv/", "status": 200, "accessible": true, "responseTime": 1099},
+            {"appName": "app-004-383f9j", "url": "https://muumuu8181.github.io/published-apps/app-004-383f9j/", "status": 200, "accessible": true, "responseTime": 1099},
+            {"appName": "app-004-8in9a7", "url": "https://muumuu8181.github.io/published-apps/app-004-8in9a7/", "status": 200, "accessible": true, "responseTime": 1135},
+            {"appName": "app-004-8zhmt8", "url": "https://muumuu8181.github.io/published-apps/app-004-8zhmt8/", "status": 200, "accessible": true, "responseTime": 1076},
+            {"appName": "app-004-eb82au", "url": "https://muumuu8181.github.io/published-apps/app-004-eb82au/", "status": 200, "accessible": true, "responseTime": 1120},
+            {"appName": "app-004-puzcnd", "url": "https://muumuu8181.github.io/published-apps/app-004-puzcnd/", "status": 200, "accessible": true, "responseTime": 1072},
+            {"appName": "app-004-uujaea", "url": "https://muumuu8181.github.io/published-apps/app-004-uujaea/", "status": 200, "accessible": true, "responseTime": 1145},
+            {"appName": "app-005-4hgqve", "url": "https://muumuu8181.github.io/published-apps/app-005-4hgqve/", "status": 200, "accessible": true, "responseTime": 1145},
+            {"appName": "app-005-ar94ux", "url": "https://muumuu8181.github.io/published-apps/app-005-ar94ux/", "status": 200, "accessible": true, "responseTime": 1152},
+            {"appName": "app-005-cwmucx", "url": "https://muumuu8181.github.io/published-apps/app-005-cwmucx/", "status": 200, "accessible": true, "responseTime": 1151},
+            {"appName": "app-006-izhq8x", "url": "https://muumuu8181.github.io/published-apps/app-006-izhq8x/", "status": 200, "accessible": true, "responseTime": 1166},
+            {"appName": "app-007-aq86rj", "url": "https://muumuu8181.github.io/published-apps/app-007-aq86rj/", "status": 200, "accessible": true, "responseTime": 1156},
+            {"appName": "app-011-qciksk", "url": "https://muumuu8181.github.io/published-apps/app-011-qciksk/", "status": 200, "accessible": true, "responseTime": 1174},
+            {"appName": "app-012-7eyvn6", "url": "https://muumuu8181.github.io/published-apps/app-012-7eyvn6/", "status": 200, "accessible": true, "responseTime": 1210},
+            {"appName": "app-012-hy9x2k", "url": "https://muumuu8181.github.io/published-apps/app-012-hy9x2k/", "status": 200, "accessible": true, "responseTime": 1191},
+            {"appName": "app-013-kyg9mx", "url": "https://muumuu8181.github.io/published-apps/app-013-kyg9mx/", "status": 200, "accessible": true, "responseTime": 1202},
+            {"appName": "app-013-vtwbau", "url": "https://muumuu8181.github.io/published-apps/app-013-vtwbau/", "status": 200, "accessible": true, "responseTime": 1222},
+            {"appName": "app-013-wx7f4g", "url": "https://muumuu8181.github.io/published-apps/app-013-wx7f4g/", "status": 200, "accessible": true, "responseTime": 1187}
+          ]
+        };
+
+        // 初期化
+        async function init() {
+            try {
+                console.log('🚀 レビューツール初期化開始...');
+                
+                // アプリデータ読み込み
+                let data;
+                try {
+                    const response = await fetch('./data.json');
+                    if (response.ok) {
+                        data = await response.json();
+                        console.log('📋 data.json読み込み成功:', data.summary);
+                    } else {
+                        throw new Error('data.json読み込み失敗');
+                    }
+                } catch (error) {
+                    console.error('❌ data.json読み込みエラー:', error);
+                    console.log('📋 埋め込みデータを使用します');
+                    data = appData;
+                }
+                
+                if (!data.apps || !Array.isArray(data.apps)) {
+                    throw new Error('アプリデータが見つかりません');
+                }
+                
+                apps = data.apps.filter(app => app.accessible === true);
+                console.log(`📱 ${apps.length}個のアクセス可能なアプリを読み込みました`);
+                
+                if (apps.length === 0) {
+                    throw new Error('アクセス可能なアプリが見つかりません');
+                }
+                
+                loadReviews();
+                initRatingButtons();
+                showApp(0);
+                
+            } catch (error) {
+                console.error('❌ 初期化エラー:', error);
+                document.getElementById('currentAppName').textContent = 'エラー: ' + error.message;
+                document.getElementById('progressText').textContent = 'データ読み込み失敗';
+            }
+        }
+
+        // 評価ボタン初期化
+        function initRatingButtons() {
+            const categories = ['designRating', 'functionalityRating', 'usabilityRating', 'performanceRating'];
+            categories.forEach(category => {
+                const container = document.getElementById(category);
+                container.innerHTML = '';
+                for (let i = 1; i <= 10; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'rating-btn';
+                    btn.textContent = i;
+                    btn.onclick = () => setRating(category, i);
+                    container.appendChild(btn);
+                }
+            });
+        }
+
+        // 評価設定
+        function setRating(category, value) {
+            const container = document.getElementById(category);
+            const buttons = container.querySelectorAll('.rating-btn');
+            buttons.forEach((btn, index) => {
+                if (index + 1 <= value) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            const appId = apps[currentIndex].appName;
+            if (!reviews[appId]) reviews[appId] = {};
+            reviews[appId][category.replace('Rating', '')] = value;
+        }
+
+        // クイック評価
+        window.quickRating = function(type) {
+            const appId = apps[currentIndex].appName;
+            if (!reviews[appId]) reviews[appId] = {};
+            reviews[appId].quickRating = type;
+            
+            document.querySelectorAll('.quick-btn').forEach(btn => btn.style.opacity = '0.5');
+            event.target.style.opacity = '1';
+            setTimeout(() => {
+                document.querySelectorAll('.quick-btn').forEach(btn => btn.style.opacity = '1');
+            }, 500);
+        };
+
+        // アプリ表示
+        function showApp(index) {
+            if (index < 0 || index >= apps.length) return;
+            
+            currentIndex = index;
+            const app = apps[index];
+            
+            document.getElementById('currentAppName').textContent = app.appName;
+            document.getElementById('currentAppStatus').textContent = `状態: ${app.status} | 応答時間: ${app.responseTime}ms`;
+            document.getElementById('headerAppName').textContent = app.appName;
+            document.getElementById('headerAppUrl').textContent = app.url;
+            
+            const progress = ((index + 1) / apps.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressText').textContent = `${index + 1} / ${apps.length} 完了`;
+            
+            const iframe = document.getElementById('appFrame');
+            iframe.src = app.url;
+            
+            loadCurrentReview();
+            updateStats();
+        }
+
+        // 現在のレビュー読み込み
+        function loadCurrentReview() {
+            const appId = apps[currentIndex].appName;
+            const review = reviews[appId] || {};
+            
+            ['design', 'functionality', 'usability', 'performance'].forEach(category => {
+                if (review[category]) {
+                    setRating(category + 'Rating', review[category]);
+                } else {
+                    document.getElementById(category + 'Rating').querySelectorAll('.rating-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                }
+            });
+            
+            document.getElementById('memoTextarea').value = review.memo || '';
+            
+            document.querySelectorAll('.quick-btn').forEach(btn => btn.style.opacity = '1');
+            if (review.quickRating) {
+                const quickBtn = document.querySelector(`.quick-${review.quickRating}`);
+                if (quickBtn) quickBtn.style.opacity = '1';
+            }
+        }
+
+        // レビュー保存
+        window.saveReview = async function() {
+            const appId = apps[currentIndex].appName;
+            if (!reviews[appId]) reviews[appId] = {};
+            reviews[appId].memo = document.getElementById('memoTextarea').value;
+            reviews[appId].timestamp = new Date().toISOString();
+            
+            // ローカル保存
+            localStorage.setItem('appReviews', JSON.stringify(reviews));
+            
+            const saveBtn = document.querySelector('.btn-save');
+            const originalText = saveBtn.textContent;
+            
+            // Firebase保存試行
+            if (isFirebaseConnected && currentUser) {
+                saveBtn.textContent = '🔄 同期中...';
+                const success = await saveFirebaseReview(appId, reviews[appId]);
+                if (success) {
+                    saveBtn.textContent = '✅ クラウド同期完了';
+                } else {
+                    saveBtn.textContent = '💾 ローカル保存';
+                }
+            } else {
+                saveBtn.textContent = '💾 ローカル保存';
+            }
+            
+            setTimeout(() => {
+                saveBtn.textContent = originalText;
+            }, 1500);
+            
+            updateStats();
+        };
+
+        // ローカルレビュー読み込み
+        function loadReviews() {
+            const saved = localStorage.getItem('appReviews');
+            if (saved) {
+                try {
+                    reviews = JSON.parse(saved);
+                } catch (error) {
+                    console.error('ローカルレビューデータ読み込みエラー:', error);
+                    reviews = {};
+                }
+            }
+        }
+
+        // 統計更新
+        function updateStats() {
+            const reviewedApps = Object.keys(reviews).filter(appId => 
+                reviews[appId].memo || reviews[appId].design || reviews[appId].quickRating
+            );
+            
+            document.getElementById('reviewedCount').textContent = reviewedApps.length + '個';
+            
+            const avgDesign = calculateAverage('design');
+            const avgFunc = calculateAverage('functionality');
+            
+            document.getElementById('avgDesign').textContent = avgDesign ? avgDesign.toFixed(1) + '点' : '-';
+            document.getElementById('avgFunctionality').textContent = avgFunc ? avgFunc.toFixed(1) + '点' : '-';
+            
+            const goodCount = reviewedApps.filter(appId => reviews[appId].quickRating === 'good').length;
+            document.getElementById('goodCount').textContent = goodCount + '個';
+        }
+
+        // 平均計算
+        function calculateAverage(category) {
+            const values = Object.values(reviews).map(review => review[category]).filter(value => value);
+            if (values.length === 0) return null;
+            return values.reduce((sum, value) => sum + value, 0) / values.length;
+        }
+
+        // ナビゲーション
+        window.nextApp = function() {
+            if (currentIndex < apps.length - 1) {
+                showApp(currentIndex + 1);
+            }
+        };
+
+        window.previousApp = function() {
+            if (currentIndex > 0) {
+                showApp(currentIndex - 1);
+            }
+        };
+
+        // アプリ制御
+        window.reloadApp = function() {
+            const iframe = document.getElementById('appFrame');
+            iframe.src = iframe.src;
+        };
+
+        window.openInNewTab = function() {
+            window.open(apps[currentIndex].url, '_blank');
+        };
+
+        // キーボードショートカット
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+            
+            switch(e.key) {
+                case 'ArrowRight':
+                case 'n':
+                    e.preventDefault();
+                    nextApp();
+                    break;
+                case 'ArrowLeft':
+                case 'p':
+                    e.preventDefault();
+                    previousApp();
+                    break;
+                case 's':
+                    if (e.ctrlKey) {
+                        e.preventDefault();
+                        saveReview();
+                    }
+                    break;
+                case 'r':
+                    if (e.ctrlKey) {
+                        e.preventDefault();
+                        reloadApp();
+                    }
+                    break;
+            }
+        });
+
+        // 初期化実行
+        init();
+    </script>
+</body>
+</html>

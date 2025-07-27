@@ -1,0 +1,10 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": false,
+    "connection_info": {
+      ".read": true,
+      ".write": false
+    }
+  }
+}
