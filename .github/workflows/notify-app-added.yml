@@ -1,0 +1,77 @@
+name: Notify App Added
+
+# このワークフローはpublished-appsリポジトリで新しいアプリが追加された時に
+# firebase-app-reviewerリポジトリにイベントを送信します
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'app-*/**'  # app-で始まるフォルダの変更を監視
+
+jobs:
+  notify-reviewer:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Check for new apps
+      id: check_apps
+      run: |
+        # 新しく追加されたアプリフォルダを検出
+        echo "🔍 新しいアプリを検索中..."
+        
+        # 最新のコミットで追加されたapp-*フォルダを取得
+        NEW_APPS=$(git diff --name-only HEAD~1 HEAD | grep '^app-.*/' | cut -d'/' -f1 | sort -u)
+        
+        if [ -n "$NEW_APPS" ]; then
+          echo "🆕 新しいアプリが見つかりました:"
+          echo "$NEW_APPS"
+          echo "has_new_apps=true" >> $GITHUB_OUTPUT
+          
+          # アプリリストをファイルに保存
+          echo "$NEW_APPS" > new_apps.txt
+        else
+          echo "📝 新しいアプリはありません"
+          echo "has_new_apps=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Trigger Firebase App Reviewer Update
+      if: steps.check_apps.outputs.has_new_apps == 'true'
+      run: |
+        echo "🚀 Firebase App Reviewerに更新イベントを送信中..."
+        
+        # GitHub APIを使用してrepository_dispatchイベントを送信
+        curl -X POST \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository_owner }}/firebase-app-reviewer/dispatches \
+          -d '{
+            "event_type": "app-added",
+            "client_payload": {
+              "repository": "${{ github.repository }}",
+              "new_apps": '"$(cat new_apps.txt | jq -R -s -c 'split("\n")[:-1]')"',
+              "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
+            }
+          }'
+        
+        echo "✅ 更新イベント送信完了"
+    
+    - name: Summary
+      run: |
+        echo "=== 実行サマリー ==="
+        echo "📂 リポジトリ: ${{ github.repository }}"
+        echo "🔄 トリガー: プッシュイベント"
+        echo "🕐 実行時刻: $(date)"
+        
+        if [ "${{ steps.check_apps.outputs.has_new_apps }}" == "true" ]; then
+          echo "✅ 結果: 新しいアプリ検出・通知送信完了"
+          echo "📱 検出アプリ:"
+          if [ -f new_apps.txt ]; then
+            cat new_apps.txt | sed 's/^/  - /'
+          fi
+        else
+          echo "📝 結果: 新しいアプリなし"
+        fi
