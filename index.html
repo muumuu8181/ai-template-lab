@@ -166,6 +166,10 @@
                 <button class="btn btn-next" onclick="nextApp()">次へ ▶</button>
             </div>
 
+            <div class="button-section" style="margin-top: 10px;">
+                <button class="btn" style="background: #3742fa; color: white; font-size: 0.8rem;" onclick="checkFirebaseData()">🔍 Firebase確認</button>
+            </div>
+
             <div class="stats-section">
                 <div class="stats-title">📈 レビュー統計</div>
                 <div class="stats-item"><span>レビュー済み:</span><span id="reviewedCount">0個</span></div>
@@ -314,19 +318,16 @@
             });
         }
 
-        // Firebaseからレビューデータ読み込み（compat版）
+        // Firebaseからレビューデータ読み込み（Realtime Database版）
         async function loadFirebaseReviews() {
             if (!isFirebaseConnected || !currentUser) return;
 
             try {
-                const reviewsRef = db.collection('reviews').where('userId', '==', currentUser.uid);
+                const reviewsRef = database.ref(`app-reviews/${currentUser.uid}`);
                 
-                reviewsRef.onSnapshot((querySnapshot) => {
-                    reviews = {};
-                    querySnapshot.forEach((doc) => {
-                        const data = doc.data();
-                        reviews[data.appName] = data;
-                    });
+                reviewsRef.on('value', (snapshot) => {
+                    const data = snapshot.val() || {};
+                    reviews = data;
                     console.log('📊 Firebaseレビューデータ読み込み完了:', Object.keys(reviews).length);
                     updateStats();
                     if (currentIndex >= 0) loadCurrentReview();
@@ -336,7 +337,7 @@
             }
         }
 
-        // Firebaseにレビューデータ保存（compat版）
+        // Firebaseにレビューデータ保存（Realtime Database版）
         async function saveFirebaseReview(appName, reviewData) {
             if (!isFirebaseConnected || !currentUser) return false;
 
@@ -346,11 +347,10 @@
                     appName: appName,
                     ...reviewData,
                     timestamp: new Date().toISOString(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     deviceInfo: navigator.userAgent
                 };
 
-                await db.collection('reviews').doc(`${currentUser.uid}_${appName}`).set(reviewDoc);
+                await database.ref(`app-reviews/${currentUser.uid}/${appName}`).set(reviewDoc);
                 console.log('💾 Firebase保存成功:', appName);
                 return true;
             } catch (error) {
@@ -694,16 +694,55 @@
             return values.reduce((sum, value) => sum + value, 0) / values.length;
         }
 
+        // Firebase データ確認（Realtime Database版）
+        window.checkFirebaseData = async function() {
+            if (!currentUser) {
+                alert('⚠️ ログインが必要です');
+                return;
+            }
+
+            try {
+                const reviewsRef = database.ref(`app-reviews/${currentUser.uid}`);
+                const snapshot = await reviewsRef.once('value');
+                const data = snapshot.val() || {};
+                
+                let message = `📊 Firebaseデータ確認結果:\n\n`;
+                message += `👤 ユーザー: ${currentUser.email}\n`;
+                message += `📝 保存済みレビュー: ${Object.keys(data).length}件\n\n`;
+                
+                if (Object.keys(data).length > 0) {
+                    Object.entries(data).forEach(([appName, reviewData]) => {
+                        message += `🔸 ${appName}\n`;
+                        if (reviewData.quickRating) message += `  👍 評価: ${reviewData.quickRating}\n`;
+                        if (reviewData.memo) message += `  📝 メモ: ${reviewData.memo.substring(0, 30)}...\n`;
+                        message += `  🕒 更新: ${new Date(reviewData.timestamp).toLocaleString()}\n\n`;
+                    });
+                } else {
+                    message += `❌ データが見つかりません\n`;
+                    message += `💡 レビューを保存してから再確認してください`;
+                }
+                
+                alert(message);
+            } catch (error) {
+                console.error('❌ Firebase確認エラー:', error);
+                alert(`❌ Firebase確認エラー:\n${error.message}`);
+            }
+        };
+
         // ナビゲーション
         window.nextApp = function() {
             if (currentIndex < apps.length - 1) {
                 showApp(currentIndex + 1);
+            } else {
+                alert('🎉 最後のアプリです！お疲れさまでした。');
             }
         };
 
         window.previousApp = function() {
             if (currentIndex > 0) {
                 showApp(currentIndex - 1);
+            } else {
+                alert('📍 最初のアプリです。');
             }
         };
 
