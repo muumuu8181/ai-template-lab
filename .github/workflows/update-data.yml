@@ -32,9 +32,30 @@ jobs:
         # Node.jsスクリプト実行に必要な依存関係をインストール
         echo "Node.js環境をセットアップしました"
     
+    - name: Get previous stats
+      id: prev_stats
+      run: |
+        echo "📊 前回の統計を取得中..."
+        if [ -f data.json ] && command -v jq &> /dev/null; then
+          PREV_TOTAL=$(jq '.summary.total // 0' data.json)
+          PREV_ACCESSIBLE=$(jq '.summary.accessible // 0' data.json)
+          echo "prev_total=$PREV_TOTAL" >> $GITHUB_OUTPUT
+          echo "prev_accessible=$PREV_ACCESSIBLE" >> $GITHUB_OUTPUT
+          echo "📱 前回統計: 総計${PREV_TOTAL}件、アクセス可能${PREV_ACCESSIBLE}件"
+        else
+          echo "prev_total=0" >> $GITHUB_OUTPUT
+          echo "prev_accessible=0" >> $GITHUB_OUTPUT
+          echo "📝 前回データなし（初回実行）"
+        fi
+
     - name: Update app data
+      id: update_data
       run: |
         echo "🔍 アプリデータを更新中..."
+        
+        # 開始時刻を記録
+        START_TIME=$(date '+%Y-%m-%d %H:%M:%S UTC')
+        echo "⏰ 開始時刻: $START_TIME"
         
         # github-pages-status-checker.cjsを実行してdata.jsonを生成
         node github-pages-status-checker.cjs > github-pages-status.json
@@ -44,16 +65,29 @@ jobs:
         
         echo "📊 データ更新完了"
         
-        # 統計を表示
-        echo "=== 更新統計 ==="
-        if [ -f data.json ]; then
+        # 新しい統計を取得
+        if [ -f data.json ] && command -v jq &> /dev/null; then
+          NEW_TOTAL=$(jq '.summary.total // 0' data.json)
+          NEW_ACCESSIBLE=$(jq '.summary.accessible // 0' data.json)
+          TIMESTAMP=$(jq -r '.timestamp // "不明"' data.json)
+          
+          echo "new_total=$NEW_TOTAL" >> $GITHUB_OUTPUT
+          echo "new_accessible=$NEW_ACCESSIBLE" >> $GITHUB_OUTPUT
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "start_time=$START_TIME" >> $GITHUB_OUTPUT
+          
+          # 統計を表示
+          echo "=== 更新統計 ==="
           echo "✅ data.json更新成功"
-          # JSONから統計情報を抽出（簡易版）
-          if command -v jq &> /dev/null; then
-            echo "📱 総アプリ数: $(jq '.summary.total // "不明"' data.json)"
-            echo "✅ アクセス可能: $(jq '.summary.accessible // "不明"' data.json)"
-            echo "❌ アクセス不可: $(jq '.summary.inaccessible // "不明"' data.json)"
-          fi
+          echo "📱 総アプリ数: $NEW_TOTAL"
+          echo "✅ アクセス可能: $NEW_ACCESSIBLE"
+          echo "❌ アクセス不可: $((NEW_TOTAL - NEW_ACCESSIBLE))"
+          
+          # 変化を計算
+          TOTAL_DIFF=$((NEW_TOTAL - ${{ steps.prev_stats.outputs.prev_total }}))
+          ACCESSIBLE_DIFF=$((NEW_ACCESSIBLE - ${{ steps.prev_stats.outputs.prev_accessible }}))
+          
+          echo "📈 変化: 総計${TOTAL_DIFF:+"+"}$TOTAL_DIFF件、アクセス可能${ACCESSIBLE_DIFF:+"+"}$ACCESSIBLE_DIFF件"
         else
           echo "❌ data.json生成失敗"
           exit 1
@@ -71,6 +105,45 @@ jobs:
           echo "changed=true" >> $GITHUB_OUTPUT
         fi
     
+    - name: Create execution log
+      id: create_log
+      run: |
+        # 実行ログを作成
+        LOG_FILE="execution-logs/data-update-$(date '+%Y%m%d-%H%M%S').md"
+        mkdir -p execution-logs
+        
+        cat > "$LOG_FILE" << EOF
+# 📊 Data.json 自動更新ログ
+
+## 実行情報
+- **実行日時**: ${{ steps.update_data.outputs.start_time }}
+- **トリガー**: ${{ github.event_name }}
+- **実行者**: GitHub Actions
+- **リポジトリ**: ${{ github.repository }}
+
+## 更新結果
+### 📱 アプリ統計
+- **更新前**: 総計${{ steps.prev_stats.outputs.prev_total }}件、アクセス可能${{ steps.prev_stats.outputs.prev_accessible }}件
+- **更新後**: 総計${{ steps.update_data.outputs.new_total }}件、アクセス可能${{ steps.update_data.outputs.new_accessible }}件
+- **変化**: 総計$((${{ steps.update_data.outputs.new_total }} - ${{ steps.prev_stats.outputs.prev_total }}))件、アクセス可能$((${{ steps.update_data.outputs.new_accessible }} - ${{ steps.prev_stats.outputs.prev_accessible }}))件
+
+### 📋 処理状況
+- **data.json更新**: ✅ 成功
+- **変更検出**: ${{ steps.changes.outputs.changed == 'true' && '🔄 変更あり' || '📝 変更なし' }}
+- **Git反映**: ${{ steps.changes.outputs.changed == 'true' && 'コミット・プッシュ実行' || 'スキップ（変更なし）' }}
+
+## データソース情報
+- **データタイムスタンプ**: ${{ steps.update_data.outputs.timestamp }}
+- **ソースリポジトリ**: muumuu8181/published-apps
+- **チェッカースクリプト**: github-pages-status-checker.cjs
+
+---
+*自動生成ログ - GitHub Actions*
+EOF
+        
+        echo "log_file=$LOG_FILE" >> $GITHUB_OUTPUT
+        echo "📋 実行ログ作成: $LOG_FILE"
+
     - name: Commit and push changes
       if: steps.changes.outputs.changed == 'true'
       run: |
@@ -78,23 +151,23 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
-        # 変更をコミット
-        git add data.json
-        git commit -m "🤖 Auto-update app data
+        # 変更をコミット（ログファイルも含む）
+        git add data.json execution-logs/
+        git commit -m "🤖 Auto-update app data (${{ steps.update_data.outputs.start_time }})
 
 📊 アプリデータ自動更新:
-- github-pages-status-checker.cjsで最新状況をチェック
-- published-appsリポジトリの変更を反映
-- Firebase App Reviewerで新しいアプリが利用可能
+- 更新前: ${{ steps.prev_stats.outputs.prev_total }}件 → 更新後: ${{ steps.update_data.outputs.new_total }}件
+- アクセス可能: ${{ steps.prev_stats.outputs.prev_accessible }}件 → ${{ steps.update_data.outputs.new_accessible }}件
+- 変化: +$((${{ steps.update_data.outputs.new_total }} - ${{ steps.prev_stats.outputs.prev_total }}))件（総計）、+$((${{ steps.update_data.outputs.new_accessible }} - ${{ steps.prev_stats.outputs.prev_accessible }}))件（アクセス可能）
 
-🕐 更新時刻: $(date '+%Y-%m-%d %H:%M:%S UTC')
+📋 実行ログ: ${{ steps.create_log.outputs.log_file }}
 
 🤖 Generated by GitHub Actions"
         
         # プッシュ
         git push
         
-        echo "✅ 変更をプッシュしました"
+        echo "✅ 変更とログをプッシュしました"
     
     - name: No changes detected
       if: steps.changes.outputs.changed == 'false'

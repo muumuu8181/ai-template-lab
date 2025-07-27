@@ -18,21 +18,96 @@ Firebase App Reviewerで使用している Firebase 設定とGoogle認証設定�
 
 ## 🔐 Authentication 設定
 
-### Google認証プロバイダー
-**設定場所**: https://console.firebase.google.com/project/shares-b1b97/authentication/providers
+### Google認証プロバイダー設定手順
 
-#### 有効化済み設定:
+#### 📋 事前準備
+1. **Googleアカウント**が必要（Firebase Console アクセス用）
+2. **Firebase プロジェクト**が作成済みであること
+
+#### 🚀 Google認証有効化手順
+
+##### Step 1: Firebase Console にアクセス
+```
+https://console.firebase.google.com/project/shares-b1b97
+```
+
+##### Step 2: Authentication設定画面へ
+1. 左メニューから **「Authentication」** をクリック
+2. **「Sign-in method」** タブをクリック
+3. **「Additional providers」** セクションを確認
+
+##### Step 3: Google認証プロバイダーを有効化
+1. **「Google」** をクリック
+2. **「Enable」** トグルを **ON** にする
+3. **「Project support email」** を設定
+   - 自分のGoogleアカウントのメールアドレスを入力
+   - 例: `kakari8888@gmail.com`
+4. **「Save」** ボタンをクリック
+
+##### Step 4: 承認済みドメインを設定
+1. **「Settings」** タブをクリック
+2. **「Authorized domains」** セクションを確認
+3. 以下のドメインが追加されていることを確認:
+   - ✅ `muumuu8181.github.io` (GitHub Pages用)
+   - ✅ `localhost` (ローカル開発用)
+4. 未追加の場合は **「Add domain」** で追加
+
+##### Step 5: 設定確認
+- ✅ Google認証が **「Enabled」** になっている
+- ✅ サポートメールが設定されている  
+- ✅ 必要なドメインが承認済みリストにある
+
+#### 🔧 現在の設定状況
 - ☑️ **Google認証プロバイダー**: 有効
+- ☑️ **プロジェクトサポートメール**: 設定済み
 - ☑️ **承認済みドメイン**: 
   - `muumuu8181.github.io` (GitHub Pages)
   - `localhost` (ローカル開発用)
 
-#### 設定手順:
+#### ⚠️ トラブルシューティング
+
+##### エラー: "auth/popup-blocked"
+**原因**: ブラウザがポップアップをブロック  
+**解決法**:
+1. ブラウザのアドレスバー右側のポップアップブロックアイコンをクリック
+2. 「このサイトのポップアップを常に許可」を選択
+3. ページをリロードして再試行
+
+##### エラー: "auth/unauthorized-domain"
+**原因**: 認証を試行しているドメインが承認済みリストにない  
+**解決法**:
+1. Firebase Console → Authentication → Settings → Authorized domains
+2. 該当ドメインを追加
+3. 数分待ってから再試行
+
+##### エラー: "auth/operation-not-allowed"
+**原因**: Google認証プロバイダーが無効  
+**解決法**:
 1. Firebase Console → Authentication → Sign-in method
-2. Google プロバイダーを選択
-3. 「有効にする」をON
-4. プロジェクトサポートメールを設定
-5. 承認済みドメインに `muumuu8181.github.io` を追加
+2. Google プロバイダーが有効になっているか確認
+3. 無効の場合は有効化
+
+#### 🧪 動作テスト手順
+
+##### 1. ローカルテスト
+```bash
+# 簡易サーバー起動
+python -m http.server 8000
+# または
+npx serve .
+```
+`http://localhost:8000` でアクセスしてテスト
+
+##### 2. 本番環境テスト
+```
+https://muumuu8181.github.io/firebase-app-reviewer/
+```
+
+##### 3. 確認項目
+- ✅ 「🔵 Googleで続行」ボタンが表示される
+- ✅ クリックでGoogleログインポップアップが開く
+- ✅ 認証成功でユーザー情報が表示される
+- ✅ アバター画像が表示される（Googleアカウントに設定されている場合）
 
 ## 💾 Realtime Database 設定
 

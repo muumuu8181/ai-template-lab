@@ -168,6 +168,7 @@
 
             <div class="button-section" style="margin-top: 10px;">
                 <button class="btn" style="background: #3742fa; color: white; font-size: 0.8rem;" onclick="checkFirebaseData()">🔍 Firebase確認</button>
+                <button class="btn" style="background: #26d0ce; color: white; font-size: 0.8rem; margin-top: 5px;" onclick="showUpdateLogs()">📋 更新ログ</button>
             </div>
 
             <div class="stats-section">
@@ -726,6 +727,42 @@
             } catch (error) {
                 console.error('❌ Firebase確認エラー:', error);
                 alert(`❌ Firebase確認エラー:\n${error.message}`);
+            }
+        };
+
+        // 更新ログ表示
+        window.showUpdateLogs = async function() {
+            try {
+                // GitHub API で最新の実行ログを取得
+                const response = await fetch('https://api.github.com/repos/muumuu8181/firebase-app-reviewer/actions/workflows/update-data.yml/runs?per_page=5');
+                const data = await response.json();
+                
+                let message = `📋 data.json 自動更新ログ:\n\n`;
+                
+                if (data.workflow_runs && data.workflow_runs.length > 0) {
+                    data.workflow_runs.forEach((run, index) => {
+                        const date = new Date(run.created_at).toLocaleString('ja-JP');
+                        const status = run.conclusion === 'success' ? '✅' : 
+                                     run.conclusion === 'failure' ? '❌' : '🔄';
+                        const trigger = run.event === 'schedule' ? '⏰自動実行' :
+                                       run.event === 'workflow_dispatch' ? '👤手動実行' :
+                                       run.event === 'repository_dispatch' ? '🆕イベント駆動' : run.event;
+                        
+                        message += `${index + 1}. ${status} ${date}\n`;
+                        message += `   トリガー: ${trigger}\n`;
+                        message += `   実行時間: ${Math.round((new Date(run.updated_at) - new Date(run.created_at)) / 1000)}秒\n\n`;
+                    });
+                } else {
+                    message += `📝 実行履歴がありません\n`;
+                    message += `💡 GitHub Actions が実行されるとここにログが表示されます`;
+                }
+                
+                message += `\n🔗 詳細ログ: GitHub > Actions タブで確認`;
+                alert(message);
+                
+            } catch (error) {
+                console.error('❌ ログ取得エラー:', error);
+                alert(`❌ ログ取得エラー:\n${error.message}\n\n💡 GitHub API の制限によりログを取得できませんでした`);
             }
         };
 
