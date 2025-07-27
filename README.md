@@ -1,11 +1,13 @@
-# 🔍 GitHub Pages アプリレビューツール
+# 🔥 Firebase App Reviewer
 
 107個のGitHub Pagesアプリを効率的にレビューできるWebアプリケーションです。
+
+**🌐 アプリURL:** https://muumuu8181.github.io/firebase-app-reviewer/
 
 ## ✨ 特徴
 
 - **📱 クロスプラットフォーム**: PC、タブレット、スマートフォンで動作
-- **🔄 オンライン同期**: GitHub APIでレビューデータを端末間で同期
+- **🔄 リアルタイム同期**: Firebase でレビューデータを端末間で同期
 - **⚡ 高速評価**: クイック評価ボタンで素早く評価
 - **📊 詳細分析**: 10点満点での詳細評価システム
 - **💾 自動保存**: ローカル＋オンライン自動保存
@@ -17,18 +19,18 @@
 
 1. **GitHub Pages でアクセス**:
    ```
-   https://yourname.github.io/app-reviewer/
+   https://muumuu8181.github.io/firebase-app-reviewer/
    ```
 
-2. **GitHub連携設定**:
-   - GitHub Personal Access Token を作成
-   - リポジトリ名を入力
-   - 「接続テスト」ボタンで認証
+2. **Google認証でログイン**:
+   - 「🔵 Googleで続行」ボタンをクリック
+   - Googleアカウントで認証
+   - リアルタイム同期が自動で開始
 
 3. **レビュー開始**:
    - 左パネルでアプリを評価
    - 右側でアプリを実際に操作
-   - 自動的にオンライン同期
+   - 自動的にFirebaseリアルタイム同期
 
 ### ローカル版
 
