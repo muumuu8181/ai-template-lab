@@ -103,24 +103,14 @@
 
             <!-- 認証セクション -->
             <div class="auth-section" id="authSection">
-                <h3>🔐 ログインして始める</h3>
+                <h3>🔐 Googleログインが必要です</h3>
+                <p style="margin-bottom: 15px; font-size: 0.9rem; opacity: 0.9;">
+                    📱 複数デバイス間でのリアルタイム同期のため、Googleアカウントでのログインが必要です
+                </p>
                 <div class="auth-methods">
                     <button class="auth-btn google-btn" onclick="signInWithGoogle()">
                         🔵 Googleで続行
                     </button>
-                    <button class="auth-btn email-btn" onclick="toggleEmailForm()">
-                        📧 メール / パスワード
-                    </button>
-                    <button class="auth-btn anon-btn" onclick="signInAnonymously()">
-                        👤 ゲストとして始める
-                    </button>
-                </div>
-                
-                <div class="email-form" id="emailForm">
-                    <input type="email" id="email" placeholder="メールアドレス">
-                    <input type="password" id="password" placeholder="パスワード">
-                    <button onclick="signUp()">📝 新規登録</button>
-                    <button onclick="signIn()">🔑 ログイン</button>
                 </div>
             </div>
 
@@ -200,24 +190,23 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        // Firebase設定（GitHub Pages用 - あなたのFirebaseプロジェクトの設定に置き換えてください）
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, collection, doc, setDoc, onSnapshot, query, where, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-        import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+    <!-- Firebase SDKs (compat版に変更) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-        // 📋 Firebase設定例 - あなたのプロジェクト設定に置き換えてください
+    <script>
+
+        // 📋 Firebase設定（shares-b1b97プロジェクト）
         const firebaseConfig = {
-            // ⚠️ ここにあなたのFirebase設定を入力してください
-            apiKey: "your-api-key-here",
-            authDomain: "your-project.firebaseapp.com", 
-            databaseURL: "https://your-project-default-rtdb.firebaseio.com",
-            projectId: "your-project-id",
-            storageBucket: "your-project.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef123456"
+            apiKey: "AIzaSyA5PXKChizYDCXF_GJ4KL6Ylq9K5hCPXWE",
+            authDomain: "shares-b1b97.firebaseapp.com",
+            databaseURL: "https://shares-b1b97-default-rtdb.firebaseio.com",
+            projectId: "shares-b1b97",
+            storageBucket: "shares-b1b97.firebasestorage.app",
+            messagingSenderId: "38311063248",
+            appId: "1:38311063248:web:0d2d5726d12b305b24b8d5"
         };
 
         // Firebase初期化
@@ -230,18 +219,17 @@
         let currentIndex = 0;
         let reviews = {};
 
-        // Firebase初期化とエラーハンドリング
+        // Firebase初期化とエラーハンドリング（compat版）
         try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            database = getDatabase(app);
+            firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+            database = firebase.database();
             isFirebaseConnected = true;
             console.log('🔥 Firebase接続成功');
             
             // 接続状態監視
-            const connectedRef = ref(database, '.info/connected');
-            onValue(connectedRef, (snap) => {
+            database.ref('.info/connected').on('value', (snap) => {
                 const isOnline = snap.val() === true;
                 const statusEl = document.getElementById('syncStatus');
                 if (statusEl) {
@@ -253,36 +241,24 @@
             
         } catch (error) {
             console.error('❌ Firebase接続エラー:', error);
-            document.getElementById('syncStatus').innerHTML = '<span class="sync-offline">⚠️ Firebase未設定</span>';
-            document.getElementById('authSection').innerHTML = `
-                <h3>⚠️ Firebase設定が必要です</h3>
-                <p>index.html内のfirebaseConfigを設定してください</p>
-                <details style="margin-top: 10px; color: #ddd;">
-                    <summary>設定手順</summary>
-                    <ol style="margin: 10px 0; padding-left: 20px; font-size: 0.8rem;">
-                        <li>Firebase Console でプロジェクト作成</li>
-                        <li>Authentication で Google認証を有効化</li>
-                        <li>Firestore Database 作成</li>
-                        <li>Realtime Database 作成</li>
-                        <li>プロジェクト設定からConfig取得</li>
-                    </ol>
-                </details>`;
+            document.getElementById('syncStatus').innerHTML = '<span class="sync-offline">⚠️ Firebase接続エラー</span>';
         }
 
-        // 認証関数
+        // 認証関数（Google認証のみ、compat版）
         window.signInWithGoogle = async function() {
             if (!isFirebaseConnected) {
-                alert('Firebase設定が必要です');
+                alert('Firebase接続エラーです。ページをリロードしてください。');
                 return;
             }
 
-            const provider = new GoogleAuthProvider();
+            const provider = new firebase.auth.GoogleAuthProvider();
             provider.addScope('profile');
             provider.addScope('email');
             
             try {
-                const result = await signInWithPopup(auth, provider);
+                const result = await auth.signInWithPopup(provider);
                 console.log('✅ Google認証成功:', result.user.displayName);
+                console.log('📱 リアルタイム同期が有効になりました');
             } catch (error) {
                 console.error('❌ Google認証エラー:', error);
                 if (error.code === 'auth/popup-closed-by-user') {
@@ -295,96 +271,27 @@
             }
         };
 
-        window.toggleEmailForm = function() {
-            const form = document.getElementById('emailForm');
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        };
-
-        window.signUp = async function() {
-            if (!isFirebaseConnected) {
-                alert('Firebase設定が必要です');
-                return;
-            }
-
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            if (!email || !password) {
-                alert('メールアドレスとパスワードを入力してください');
-                return;
-            }
-
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                console.log('✅ 登録成功:', userCredential.user.email);
-                document.getElementById('emailForm').style.display = 'none';
-            } catch (error) {
-                console.error('❌ 登録エラー:', error);
-                alert('登録エラー: ' + error.message);
-            }
-        };
-
-        window.signIn = async function() {
-            if (!isFirebaseConnected) {
-                alert('Firebase設定が必要です');
-                return;
-            }
-
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            if (!email || !password) {
-                alert('メールアドレスとパスワードを入力してください');
-                return;
-            }
-
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                console.log('✅ ログイン成功:', userCredential.user.email);
-                document.getElementById('emailForm').style.display = 'none';
-            } catch (error) {
-                console.error('❌ ログインエラー:', error);
-                alert('ログインエラー: ' + error.message);
-            }
-        };
-
-        window.signInAnonymously = async function() {
-            if (!isFirebaseConnected) {
-                alert('Firebase設定が必要です');
-                return;
-            }
-
-            try {
-                const userCredential = await signInAnonymously(auth);
-                console.log('✅ ゲストログイン成功');
-            } catch (error) {
-                console.error('❌ ゲストログインエラー:', error);
-                alert('ゲストログインエラー: ' + error.message);
-            }
-        };
-
         window.signOut = async function() {
             if (!isFirebaseConnected) return;
 
             try {
-                await firebaseSignOut(auth);
+                await auth.signOut();
                 console.log('✅ ログアウト成功');
             } catch (error) {
                 console.error('❌ ログアウトエラー:', error);
             }
         };
 
-        // 認証状態監視
+        // 認証状態監視（Google認証必須、compat版）
         if (isFirebaseConnected) {
-            onAuthStateChanged(auth, (user) => {
+            auth.onAuthStateChanged((user) => {
                 currentUser = user;
-                if (user) {
+                if (user && !user.isAnonymous) {
                     document.getElementById('authSection').style.display = 'none';
                     document.getElementById('userInfo').style.display = 'block';
                     
-                    // ユーザー情報表示
-                    const displayName = user.isAnonymous ? 'ゲストユーザー' : 
-                        (user.displayName || user.email || 'ユーザー');
+                    // ユーザー情報表示（Googleアカウント情報）
+                    const displayName = user.displayName || user.email || 'Googleユーザー';
                     document.getElementById('userDisplay').textContent = displayName;
                     
                     // Googleアバター表示
@@ -394,24 +301,27 @@
                         avatar.style.display = 'block';
                     }
                     
+                    // リアルタイム同期開始
                     loadFirebaseReviews();
+                    console.log('🔄 リアルタイム同期開始:', user.email);
                 } else {
+                    // 未認証または匿名ユーザーは認証画面を表示
                     document.getElementById('authSection').style.display = 'block';
                     document.getElementById('userInfo').style.display = 'none';
                     reviews = {};
+                    console.log('⚠️ Google認証が必要です');
                 }
             });
         }
 
-        // Firebaseからレビューデータ読み込み
+        // Firebaseからレビューデータ読み込み（compat版）
         async function loadFirebaseReviews() {
             if (!isFirebaseConnected || !currentUser) return;
 
             try {
-                const reviewsRef = collection(db, 'reviews');
-                const q = query(reviewsRef, where('userId', '==', currentUser.uid));
+                const reviewsRef = db.collection('reviews').where('userId', '==', currentUser.uid);
                 
-                onSnapshot(q, (querySnapshot) => {
+                reviewsRef.onSnapshot((querySnapshot) => {
                     reviews = {};
                     querySnapshot.forEach((doc) => {
                         const data = doc.data();
@@ -426,7 +336,7 @@
             }
         }
 
-        // Firebaseにレビューデータ保存
+        // Firebaseにレビューデータ保存（compat版）
         async function saveFirebaseReview(appName, reviewData) {
             if (!isFirebaseConnected || !currentUser) return false;
 
@@ -436,11 +346,11 @@
                     appName: appName,
                     ...reviewData,
                     timestamp: new Date().toISOString(),
-                    updatedAt: serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     deviceInfo: navigator.userAgent
                 };
 
-                await setDoc(doc(db, 'reviews', `${currentUser.uid}_${appName}`), reviewDoc);
+                await db.collection('reviews').doc(`${currentUser.uid}_${appName}`).set(reviewDoc);
                 console.log('💾 Firebase保存成功:', appName);
                 return true;
             } catch (error) {
@@ -706,30 +616,29 @@
             }
         }
 
-        // レビュー保存
+        // レビュー保存（Google認証必須）
         window.saveReview = async function() {
+            if (!currentUser || currentUser.isAnonymous) {
+                alert('Google認証が必要です。まずログインしてください。');
+                return;
+            }
+
             const appId = apps[currentIndex].appName;
             if (!reviews[appId]) reviews[appId] = {};
             reviews[appId].memo = document.getElementById('memoTextarea').value;
             reviews[appId].timestamp = new Date().toISOString();
             
-            // ローカル保存
-            localStorage.setItem('appReviews', JSON.stringify(reviews));
-            
             const saveBtn = document.querySelector('.btn-save');
             const originalText = saveBtn.textContent;
             
-            // Firebase保存試行
-            if (isFirebaseConnected && currentUser) {
-                saveBtn.textContent = '🔄 同期中...';
-                const success = await saveFirebaseReview(appId, reviews[appId]);
-                if (success) {
-                    saveBtn.textContent = '✅ クラウド同期完了';
-                } else {
-                    saveBtn.textContent = '💾 ローカル保存';
-                }
+            // Firebase保存（リアルタイム同期）
+            saveBtn.textContent = '🔄 同期中...';
+            const success = await saveFirebaseReview(appId, reviews[appId]);
+            if (success) {
+                saveBtn.textContent = '✅ リアルタイム同期完了';
+                console.log('📱 他のデバイスに自動同期されました');
             } else {
-                saveBtn.textContent = '💾 ローカル保存';
+                saveBtn.textContent = '❌ 同期エラー';
             }
             
             setTimeout(() => {
@@ -739,14 +648,22 @@
             updateStats();
         };
 
-        // ローカルレビュー読み込み
+        // ローカルレビュー読み込み（Google認証時は使用しない）
         function loadReviews() {
+            // Google認証済みの場合はFirebaseから読み込むため、ローカルデータは使用しない
+            if (currentUser && !currentUser.isAnonymous) {
+                console.log('🔄 Google認証済み - Firebaseからデータを読み込みます');
+                return;
+            }
+            
+            // 未認証の場合のみローカルデータを参照（表示のみ）
             const saved = localStorage.getItem('appReviews');
             if (saved) {
                 try {
                     reviews = JSON.parse(saved);
+                    console.log('📂 ローカルデータを参照（読み取り専用）');
                 } catch (error) {
-                    console.error('ローカルレビューデータ読み込みエラー:', error);
+                    console.error('❌ ローカルレビューデータ読み込みエラー:', error);
                     reviews = {};
                 }
             }
