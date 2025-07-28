@@ -57,6 +57,8 @@
         .app-title-line #headerAppName { font-size: 0.9rem; font-weight: bold; color: #5352ed; margin-bottom: 2px; }
         .app-url-line { font-size: 0.75rem; opacity: 0.8; color: white; }
         .app-controls-bottom { background: #f5f6fa; padding: 4px 15px; display: flex; gap: 8px; border-bottom: 1px solid #ddd; }
+        .app-info-bottom { background: #f8f9fa; padding: 6px 15px; border-bottom: 1px solid #ddd; }
+        .app-info-text { font-size: 0.75rem; color: #57606f; }
         .control-btn-small { padding: 5px 10px; background: #5352ed; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
         .control-btn-small:hover { background: #3742fa; }
         .app-frame { width: 166.67%; height: 166.67%; border: none; background: white; transform: scale(0.6); transform-origin: 0 0; }
@@ -88,7 +90,7 @@
         .user-app-info { background: #57606f; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
         .top-left-section { display: flex; align-items: center; gap: 15px; flex: 1; }
         .top-nav-section { display: flex; gap: 5px; }
-        .nav-btn { background: #5352ed; color: white; border: none; border-radius: 5px; padding: 6px 30px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s ease; width: 90px; }
+        .nav-btn { background: #5352ed; color: white; border: none; border-radius: 5px; padding: 6px 30px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s ease; width: 180px; }
         .nav-btn:hover { background: #3742fa; transform: translateY(-1px); }
         .nav-save { background: #2ed573; }
         .nav-save:hover { background: #26d0ce; }
@@ -99,7 +101,7 @@
         .logout-btn:hover { background: #ff3838; }
         .app-section { flex: 1; min-width: 0; }
         .app-section .app-name { font-weight: bold; color: #5352ed; margin-bottom: 3px; word-break: break-all; font-size: 0.9rem; }
-        .app-section .app-status { font-size: 0.8rem; opacity: 0.9; color: #26d0ce; }
+        .app-section .app-status { font-size: 0.8rem; font-weight: bold; color: #2f3542; }
         
         /* Androidタブレット対応 (8インチ 800x1280px 縦向き) */
         @media (max-width: 900px) and (orientation: portrait) {
@@ -235,6 +237,9 @@
             <div class="app-controls-bottom">
                 <button class="control-btn-small" onclick="reloadApp()">🔄 リロード</button>
                 <button class="control-btn-small" onclick="openInNewTab()">🔗 新しいタブで開く</button>
+            </div>
+            <div class="app-info-bottom">
+                <div class="app-info-text">アプリステータス: <span id="appStatusDisplay">読み込み中...</span></div>
             </div>
             <div class="app-container">
                 <div class="app-wrapper">
@@ -633,6 +638,7 @@
             document.getElementById('currentAppStatusFallback').textContent = `状態: ${app.status} | 応答時間: ${app.responseTime}ms`;
             document.getElementById('headerAppName').textContent = app.appName;
             document.getElementById('headerAppUrl').textContent = app.url;
+            document.getElementById('appStatusDisplay').textContent = `${app.status} | ${app.responseTime}ms`;
             
             const progress = ((index + 1) / apps.length) * 100;
             document.getElementById('progressBar').style.width = progress + '%';
