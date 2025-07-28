@@ -24,10 +24,13 @@
         .rating-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: #3d4454; border-radius: 8px; }
         .rating-label { font-size: 0.9rem; }
         .rating-buttons { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
-        .rating-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .rating-row { display: flex; gap: 5px; margin-bottom: 8px; }
         .rating-item-compact { flex: 1; background: #3d4454; border-radius: 8px; padding: 8px; }
         .rating-label-compact { font-size: 0.8rem; display: block; margin-bottom: 5px; }
         .rating-buttons-compact { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+        .rating-item-mini { flex: 1; background: #3d4454; border-radius: 6px; padding: 6px; }
+        .rating-label-mini { font-size: 0.7rem; display: block; margin-bottom: 4px; }
+        .rating-buttons-mini { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; }
         .rating-btn { width: 30px; height: 30px; border: none; border-radius: 50%; background: #57606f; color: white; font-size: 0.8rem; cursor: pointer; transition: all 0.2s ease; }
         .rating-btn:hover { background: #5352ed; transform: scale(1.1); }
         .rating-btn.active { background: #5352ed; box-shadow: 0 0 10px rgba(83, 82, 237, 0.5); }
@@ -56,12 +59,11 @@
         .control-btn:hover { background: #3742fa; }
         .app-frame { width: 166.67%; height: 166.67%; border: none; background: white; transform: scale(0.6); transform-origin: 0 0; }
         .loading { display: flex; justify-content: center; align-items: center; height: 100%; font-size: 1.2rem; color: #747d8c; }
-        .quick-rating { display: flex; gap: 10px; margin-top: 10px; }
-        .quick-btn { flex: 1; padding: 8px; border: none; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s ease; }
-        .quick-good { background: #2ed573; color: white; }
-        .quick-ok { background: #ffa502; color: white; }
-        .quick-bad { background: #ff4757; color: white; }
-        .quick-btn:hover { transform: scale(1.05); }
+        .quick-title-row { display: flex; justify-content: space-between; align-items: center; }
+        .quick-rating { display: flex; gap: 5px; }
+        .quick-btn { width: 30px; height: 30px; border: none; border-radius: 50%; background: #57606f; color: white; font-size: 0.8rem; cursor: pointer; transition: all 0.2s ease; }
+        .quick-btn:hover { background: #5352ed; transform: scale(1.1); }
+        .quick-btn.active { background: #5352ed; box-shadow: 0 0 10px rgba(83, 82, 237, 0.5); }
         
         /* 認証セクション */
         .auth-section { background: #3742fa; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
@@ -154,34 +156,38 @@
             </div>
 
             <div class="rating-section">
-                <div class="rating-title">⚡ クイック評価</div>
-                <div class="quick-rating">
-                    <button class="quick-btn quick-good" onclick="quickRating('good')">👍 Good</button>
-                    <button class="quick-btn quick-ok" onclick="quickRating('ok')">👌 OK</button>
-                    <button class="quick-btn quick-bad" onclick="quickRating('bad')">👎 Bad</button>
+                <div class="quick-title-row">
+                    <div class="rating-title">⚡ クイック評価</div>
+                    <div class="quick-rating">
+                        <button class="quick-btn" onclick="quickRating(1)">1</button>
+                        <button class="quick-btn" onclick="quickRating(2)">2</button>
+                        <button class="quick-btn" onclick="quickRating(3)">3</button>
+                        <button class="quick-btn" onclick="quickRating(4)">4</button>
+                        <button class="quick-btn" onclick="quickRating(5)">5</button>
+                    </div>
                 </div>
             </div>
 
             <div class="rating-section">
                 <div class="rating-title">📊 詳細評価 (10点満点)</div>
                 <div class="rating-row">
-                    <div class="rating-item-compact">
-                        <span class="rating-label-compact">🎨 デザイン</span>
-                        <div class="rating-buttons-compact" id="designRating"></div>
+                    <div class="rating-item-mini">
+                        <span class="rating-label-mini">🎨 デザイン</span>
+                        <div class="rating-buttons-mini" id="designRating"></div>
                     </div>
-                    <div class="rating-item-compact">
-                        <span class="rating-label-compact">⚙️ 機能性</span>
-                        <div class="rating-buttons-compact" id="functionalityRating"></div>
+                    <div class="rating-item-mini">
+                        <span class="rating-label-mini">⚙️ 機能性</span>
+                        <div class="rating-buttons-mini" id="functionalityRating"></div>
                     </div>
                 </div>
                 <div class="rating-row">
-                    <div class="rating-item-compact">
-                        <span class="rating-label-compact">🖱️ 使いやすさ</span>
-                        <div class="rating-buttons-compact" id="usabilityRating"></div>
+                    <div class="rating-item-mini">
+                        <span class="rating-label-mini">🖱️ 使いやすさ</span>
+                        <div class="rating-buttons-mini" id="usabilityRating"></div>
                     </div>
-                    <div class="rating-item-compact">
-                        <span class="rating-label-compact">⚡ パフォーマンス</span>
-                        <div class="rating-buttons-compact" id="performanceRating"></div>
+                    <div class="rating-item-mini">
+                        <span class="rating-label-mini">⚡ パフォーマンス</span>
+                        <div class="rating-buttons-mini" id="performanceRating"></div>
                     </div>
                 </div>
             </div>
@@ -207,7 +213,7 @@
                 <div class="stats-item"><span>レビュー済み:</span><span id="reviewedCount">0個</span></div>
                 <div class="stats-item"><span>平均デザイン:</span><span id="avgDesign">-</span></div>
                 <div class="stats-item"><span>平均機能性:</span><span id="avgFunctionality">-</span></div>
-                <div class="stats-item"><span>Good評価:</span><span id="goodCount">0個</span></div>
+                <div class="stats-item"><span>平均クイック:</span><span id="goodCount">-</span></div>
             </div>
         </div>
 
@@ -596,16 +602,14 @@
         }
 
         // クイック評価
-        window.quickRating = function(type) {
+        window.quickRating = function(rating) {
             const appId = apps[currentIndex].appName;
             if (!reviews[appId]) reviews[appId] = {};
-            reviews[appId].quickRating = type;
+            reviews[appId].quickRating = rating;
             
-            document.querySelectorAll('.quick-btn').forEach(btn => btn.style.opacity = '0.5');
-            event.target.style.opacity = '1';
-            setTimeout(() => {
-                document.querySelectorAll('.quick-btn').forEach(btn => btn.style.opacity = '1');
-            }, 500);
+            // ボタンのアクティブ状態を更新
+            document.querySelectorAll('.quick-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
         };
 
         // アプリ表示
@@ -650,10 +654,14 @@
             
             document.getElementById('memoTextarea').value = review.memo || '';
             
-            document.querySelectorAll('.quick-btn').forEach(btn => btn.style.opacity = '1');
+            document.querySelectorAll('.quick-btn').forEach(btn => btn.classList.remove('active'));
             if (review.quickRating) {
-                const quickBtn = document.querySelector(`.quick-${review.quickRating}`);
-                if (quickBtn) quickBtn.style.opacity = '1';
+                const quickBtns = document.querySelectorAll('.quick-btn');
+                quickBtns.forEach((btn, index) => {
+                    if (index + 1 === review.quickRating) {
+                        btn.classList.add('active');
+                    }
+                });
             }
         }
 
@@ -724,8 +732,8 @@
             document.getElementById('avgDesign').textContent = avgDesign ? avgDesign.toFixed(1) + '点' : '-';
             document.getElementById('avgFunctionality').textContent = avgFunc ? avgFunc.toFixed(1) + '点' : '-';
             
-            const goodCount = reviewedApps.filter(appId => reviews[appId].quickRating === 'good').length;
-            document.getElementById('goodCount').textContent = goodCount + '個';
+            const avgQuick = reviewedApps.reduce((sum, appId) => sum + (reviews[appId].quickRating || 0), 0) / reviewedApps.length;
+            document.getElementById('goodCount').textContent = avgQuick ? avgQuick.toFixed(1) + '点' : '-';
         }
 
         // 平均計算
@@ -754,7 +762,7 @@
                 if (Object.keys(data).length > 0) {
                     Object.entries(data).forEach(([appName, reviewData]) => {
                         message += `🔸 ${appName}\n`;
-                        if (reviewData.quickRating) message += `  👍 評価: ${reviewData.quickRating}\n`;
+                        if (reviewData.quickRating) message += `  ⚡ クイック: ${reviewData.quickRating}点\n`;
                         if (reviewData.memo) message += `  📝 メモ: ${reviewData.memo.substring(0, 30)}...\n`;
                         message += `  🕒 更新: ${new Date(reviewData.timestamp).toLocaleString()}\n\n`;
                     });
