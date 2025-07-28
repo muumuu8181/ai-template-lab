@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔥 Firebase アプリレビューツール v0.2 - 最終調整</title>
+    <title>🔥 Firebase アプリレビューツール v0.3</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; background: #f5f6fa; }
         .container { display: flex; height: 100vh; }
-        .review-panel { width: 60% !important; background: #2f3542; color: white; padding: 20px; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        .review-panel { width: 60% !important; background: #2f3542; color: white; padding: 20px; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.1); transform: scale(0.7); transform-origin: 0 0; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #57606f; padding-bottom: 15px; }
         .header h1 { font-size: 1.3rem; color: #5352ed; margin-bottom: 5px; }
         .sync-status { font-size: 0.8rem; opacity: 0.8; margin-top: 5px; }
@@ -47,7 +47,7 @@
         .app-wrapper { width: 100%; height: 100%; border: none; overflow: hidden; background: white; }
         .app-header { background: #2f3542; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         .app-url { font-size: 0.9rem; opacity: 0.8; }
-        .app-controls { display: flex; gap: 10px; justify-content: center; padding: 15px; background: #f8f9fa; border-top: 1px solid #ddd; }
+        .app-controls { display: flex; gap: 10px; justify-content: center; padding: 8px; background: #f8f9fa; border-top: 1px solid #ddd; }
         .control-btn { padding: 8px 15px; background: #5352ed; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
         .control-btn:hover { background: #3742fa; }
         .app-frame { width: 166.67%; height: 166.67%; border: none; background: white; transform: scale(0.6); transform-origin: 0 0; }
@@ -76,10 +76,10 @@
         .email-form input { width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 5px; font-size: 0.9rem; }
         .email-form button { width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 5px; background: #2ed573; color: white; cursor: pointer; font-weight: bold; }
         
-        .user-info { background: #2ed573; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
-        .user-avatar { width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 10px; }
-        .user-name { font-weight: bold; margin-bottom: 10px; }
-        .logout-btn { background: #ff4757; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+        .user-info { background: #2ed573; color: white; padding: 10px 15px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 30px; height: 30px; border-radius: 50%; }
+        .user-name { font-weight: bold; flex: 1; font-size: 0.9rem; }
+        .logout-btn { background: #ff4757; color: white; padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
         .logout-btn:hover { background: #ff3838; }
         
         /* Androidタブレット対応 (8インチ 800x1280px 縦向き) */
