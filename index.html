@@ -55,7 +55,7 @@
         .app-wrapper { width: 100%; height: 100%; border: none; overflow: hidden; background: white; }
         .app-header-compact { background: #2f3542; color: white; padding: 8px 15px; }
         .app-title-line { font-size: 0.8rem; opacity: 0.9; }
-        .app-controls-bottom { background: #f5f6fa; padding: 8px 15px; display: flex; gap: 8px; border-bottom: 1px solid #ddd; }
+        .app-controls-bottom { background: #f5f6fa; padding: 4px 15px; display: flex; gap: 8px; border-bottom: 1px solid #ddd; }
         .control-btn-small { padding: 5px 10px; background: #5352ed; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
         .control-btn-small:hover { background: #3742fa; }
         .app-frame { width: 166.67%; height: 166.67%; border: none; background: white; transform: scale(0.6); transform-origin: 0 0; }
@@ -144,16 +144,23 @@
                 </div>
             </div>
 
-            <!-- ユーザー情報とアプリ情報の統合 -->
+            <!-- ユーザー情報とアプリ情報とナビゲーション -->
             <div class="user-app-info" id="userAppInfo" style="display: none;">
-                <div class="user-section">
-                    <img id="userAvatar" class="user-avatar" style="display: none;">
-                    <div class="user-name" id="userDisplay"></div>
-                    <button class="logout-btn" onclick="signOut()">ログアウト</button>
+                <div class="top-left-section">
+                    <div class="user-section">
+                        <img id="userAvatar" class="user-avatar" style="display: none;">
+                        <div class="user-name" id="userDisplay"></div>
+                        <button class="logout-btn" onclick="signOut()">ログアウト</button>
+                    </div>
+                    <div class="app-section">
+                        <div class="app-name" id="currentAppName">アプリを読み込み中...</div>
+                        <div class="app-status" id="currentAppStatus">状態: 確認中</div>
+                    </div>
                 </div>
-                <div class="app-section">
-                    <div class="app-name" id="currentAppName">アプリを読み込み中...</div>
-                    <div class="app-status" id="currentAppStatus">状態: 確認中</div>
+                <div class="top-nav-section">
+                    <button class="nav-btn nav-prev" onclick="previousApp()">◀ 前へ</button>
+                    <button class="nav-btn nav-save" onclick="saveReview()">💾 保存</button>
+                    <button class="nav-btn nav-next" onclick="nextApp()">次へ ▶</button>
                 </div>
             </div>
 
@@ -202,11 +209,6 @@
                 <textarea class="memo-textarea" id="memoTextarea" placeholder="このアプリについての感想、改善点、気づいたことなどを自由に記入してください..."></textarea>
             </div>
 
-            <div class="button-section">
-                <button class="btn btn-prev" onclick="previousApp()">◀ 前へ</button>
-                <button class="btn btn-save" onclick="saveReview()">💾 保存</button>
-                <button class="btn btn-next" onclick="nextApp()">次へ ▶</button>
-            </div>
 
             <div class="button-section" style="margin-top: 10px;">
                 <button class="btn" style="background: #3742fa; color: white; font-size: 0.8rem;" onclick="checkFirebaseData()">🔍 Firebase確認</button>
@@ -223,19 +225,18 @@
         </div>
 
         <div class="app-display">
+            <div class="app-header-compact">
+                <div class="app-title-line">
+                    <span id="headerAppName">アプリ名</span> - <span id="headerAppUrl">URL</span>
+                </div>
+            </div>
+            <div class="app-controls-bottom">
+                <button class="control-btn-small" onclick="reloadApp()">🔄 リロード</button>
+                <button class="control-btn-small" onclick="openInNewTab()">🔗 新しいタブで開く</button>
+            </div>
             <div class="app-container">
                 <div class="app-wrapper">
                     <iframe id="appFrame" class="app-frame" src="" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-popups-to-escape-sandbox"></iframe>
-                </div>
-            </div>
-            <div class="app-controls">
-                <button class="control-btn" onclick="reloadApp()">🔄 リロード</button>
-                <button class="control-btn" onclick="openInNewTab()">🔗 新しいタブで開く</button>
-            </div>
-            <div class="app-header">
-                <div>
-                    <div id="headerAppName">アプリ名</div>
-                    <div class="app-url" id="headerAppUrl">URL</div>
                 </div>
             </div>
         </div>
