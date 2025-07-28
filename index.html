@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔥 Firebase アプリレビューツール</title>
+    <title>🔥 Firebase アプリレビューツール v0.2</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; background: #f5f6fa; }
         .container { display: flex; height: 100vh; }
-        .review-panel { width: 400px; background: #2f3542; color: white; padding: 20px; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        .review-panel { width: 80% !important; background: #2f3542; color: white; padding: 20px; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #57606f; padding-bottom: 15px; }
         .header h1 { font-size: 1.3rem; color: #5352ed; margin-bottom: 5px; }
         .sync-status { font-size: 0.8rem; opacity: 0.8; margin-top: 5px; }
@@ -42,13 +42,15 @@
         .stats-section { background: #3d4454; padding: 15px; border-radius: 10px; margin-top: 20px; }
         .stats-title { font-weight: bold; margin-bottom: 10px; color: #a4b0be; }
         .stats-item { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
-        .app-display { flex: 1; display: flex; flex-direction: column; background: white; }
+        .app-display { width: 20% !important; display: flex; flex-direction: column; background: white; }
+        .app-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .app-wrapper { width: 90%; height: 80%; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; background: #f9f9f9; }
         .app-header { background: #2f3542; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         .app-url { font-size: 0.9rem; opacity: 0.8; }
         .app-controls { display: flex; gap: 10px; }
         .control-btn { padding: 8px 15px; background: #5352ed; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
         .control-btn:hover { background: #3742fa; }
-        .app-frame { flex: 1; border: none; background: white; }
+        .app-frame { width: 100%; height: 100%; border: none; background: white; }
         .loading { display: flex; justify-content: center; align-items: center; height: 100%; font-size: 1.2rem; color: #747d8c; }
         .quick-rating { display: flex; gap: 10px; margin-top: 10px; }
         .quick-btn { flex: 1; padding: 8px; border: none; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s ease; }
@@ -80,10 +82,20 @@
         .logout-btn { background: #ff4757; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
         .logout-btn:hover { background: #ff3838; }
         
+        /* Androidタブレット対応 (8インチ 800x1280px 縦向き) */
+        @media (max-width: 900px) and (orientation: portrait) {
+            .container { flex-direction: row; }
+            .review-panel { width: 80% !important; }
+            .app-display { width: 20% !important; }
+            .app-wrapper { width: 90%; height: 80%; }
+        }
+        
+        /* スマートフォン対応 */
         @media (max-width: 768px) { 
             .container { flex-direction: column; } 
             .review-panel { width: 100%; height: 40vh; } 
-            .app-display { height: 60vh; } 
+            .app-display { width: 100%; height: 60vh; }
+            .app-wrapper { width: 90%; height: 90%; }
         }
     </style>
 </head>
@@ -191,7 +203,11 @@
                     <button class="control-btn" onclick="openInNewTab()">🔗 新しいタブで開く</button>
                 </div>
             </div>
-            <iframe id="appFrame" class="app-frame" src="" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-popups-to-escape-sandbox"></iframe>
+            <div class="app-container">
+                <div class="app-wrapper">
+                    <iframe id="appFrame" class="app-frame" src="" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-popups-to-escape-sandbox"></iframe>
+                </div>
+            </div>
         </div>
     </div>
 
