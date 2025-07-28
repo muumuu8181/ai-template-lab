@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔥 Firebase アプリレビューツール v0.3</title>
+    <title>🔥 Firebase アプリレビューツール v0.4</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; background: #f5f6fa; }
@@ -24,6 +24,10 @@
         .rating-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: #3d4454; border-radius: 8px; }
         .rating-label { font-size: 0.9rem; }
         .rating-buttons { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+        .rating-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .rating-item-compact { flex: 1; background: #3d4454; border-radius: 8px; padding: 8px; }
+        .rating-label-compact { font-size: 0.8rem; display: block; margin-bottom: 5px; }
+        .rating-buttons-compact { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
         .rating-btn { width: 30px; height: 30px; border: none; border-radius: 50%; background: #57606f; color: white; font-size: 0.8rem; cursor: pointer; transition: all 0.2s ease; }
         .rating-btn:hover { background: #5352ed; transform: scale(1.1); }
         .rating-btn.active { background: #5352ed; box-shadow: 0 0 10px rgba(83, 82, 237, 0.5); }
@@ -77,10 +81,15 @@
         .email-form button { width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 5px; background: #2ed573; color: white; cursor: pointer; font-weight: bold; }
         
         .user-info { background: #2ed573; color: white; padding: 10px 15px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .user-app-info { background: #57606f; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; }
+        .user-section { display: flex; align-items: center; gap: 8px; min-width: 0; }
         .user-avatar { width: 30px; height: 30px; border-radius: 50%; }
-        .user-name { font-weight: bold; flex: 1; font-size: 0.9rem; }
-        .logout-btn { background: #ff4757; color: white; padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+        .user-name { font-weight: bold; flex: 1; font-size: 0.85rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .logout-btn { background: #ff4757; color: white; padding: 4px 8px; border: none; border-radius: 3px; cursor: pointer; font-size: 0.75rem; white-space: nowrap; }
         .logout-btn:hover { background: #ff3838; }
+        .app-section { flex: 1; min-width: 0; }
+        .app-section .app-name { font-weight: bold; color: #5352ed; margin-bottom: 3px; word-break: break-all; font-size: 0.9rem; }
+        .app-section .app-status { font-size: 0.8rem; opacity: 0.8; color: white; }
         
         /* Androidタブレット対応 (8インチ 800x1280px 縦向き) */
         @media (max-width: 900px) and (orientation: portrait) {
@@ -126,16 +135,22 @@
                 </div>
             </div>
 
-            <!-- ユーザー情報 -->
-            <div class="user-info" id="userInfo" style="display: none;">
-                <img id="userAvatar" class="user-avatar" style="display: none;">
-                <div class="user-name" id="userDisplay"></div>
-                <button class="logout-btn" onclick="signOut()">ログアウト</button>
+            <!-- ユーザー情報とアプリ情報の統合 -->
+            <div class="user-app-info" id="userAppInfo" style="display: none;">
+                <div class="user-section">
+                    <img id="userAvatar" class="user-avatar" style="display: none;">
+                    <div class="user-name" id="userDisplay"></div>
+                    <button class="logout-btn" onclick="signOut()">ログアウト</button>
+                </div>
+                <div class="app-section">
+                    <div class="app-name" id="currentAppName">アプリを読み込み中...</div>
+                    <div class="app-status" id="currentAppStatus">状態: 確認中</div>
+                </div>
             </div>
 
-            <div class="app-info">
-                <div class="app-name" id="currentAppName">アプリを読み込み中...</div>
-                <div class="app-status" id="currentAppStatus">状態: 確認中</div>
+            <div class="app-info" id="appInfoFallback">
+                <div class="app-name" id="currentAppNameFallback">アプリを読み込み中...</div>
+                <div class="app-status" id="currentAppStatusFallback">状態: 確認中</div>
             </div>
 
             <div class="rating-section">
@@ -149,21 +164,25 @@
 
             <div class="rating-section">
                 <div class="rating-title">📊 詳細評価 (10点満点)</div>
-                <div class="rating-item">
-                    <span class="rating-label">🎨 デザイン</span>
-                    <div class="rating-buttons" id="designRating"></div>
+                <div class="rating-row">
+                    <div class="rating-item-compact">
+                        <span class="rating-label-compact">🎨 デザイン</span>
+                        <div class="rating-buttons-compact" id="designRating"></div>
+                    </div>
+                    <div class="rating-item-compact">
+                        <span class="rating-label-compact">⚙️ 機能性</span>
+                        <div class="rating-buttons-compact" id="functionalityRating"></div>
+                    </div>
                 </div>
-                <div class="rating-item">
-                    <span class="rating-label">⚙️ 機能性</span>
-                    <div class="rating-buttons" id="functionalityRating"></div>
-                </div>
-                <div class="rating-item">
-                    <span class="rating-label">🖱️ 使いやすさ</span>
-                    <div class="rating-buttons" id="usabilityRating"></div>
-                </div>
-                <div class="rating-item">
-                    <span class="rating-label">⚡ パフォーマンス</span>
-                    <div class="rating-buttons" id="performanceRating"></div>
+                <div class="rating-row">
+                    <div class="rating-item-compact">
+                        <span class="rating-label-compact">🖱️ 使いやすさ</span>
+                        <div class="rating-buttons-compact" id="usabilityRating"></div>
+                    </div>
+                    <div class="rating-item-compact">
+                        <span class="rating-label-compact">⚡ パフォーマンス</span>
+                        <div class="rating-buttons-compact" id="performanceRating"></div>
+                    </div>
                 </div>
             </div>
 
@@ -309,7 +328,8 @@
                 currentUser = user;
                 if (user && !user.isAnonymous) {
                     document.getElementById('authSection').style.display = 'none';
-                    document.getElementById('userInfo').style.display = 'block';
+                    document.getElementById('userAppInfo').style.display = 'flex';
+                    document.getElementById('appInfoFallback').style.display = 'none';
                     
                     // ユーザー情報表示（Googleアカウント情報）
                     const displayName = user.displayName || user.email || 'Googleユーザー';
@@ -328,7 +348,8 @@
                 } else {
                     // 未認証または匿名ユーザーは認証画面を表示
                     document.getElementById('authSection').style.display = 'block';
-                    document.getElementById('userInfo').style.display = 'none';
+                    document.getElementById('userAppInfo').style.display = 'none';
+                    document.getElementById('appInfoFallback').style.display = 'block';
                     reviews = {};
                     console.log('⚠️ Google認証が必要です');
                 }
@@ -536,6 +557,7 @@
             } catch (error) {
                 console.error('❌ 初期化エラー:', error);
                 document.getElementById('currentAppName').textContent = 'エラー: ' + error.message;
+                document.getElementById('currentAppNameFallback').textContent = 'エラー: ' + error.message;
                 document.getElementById('progressText').textContent = 'データ読み込み失敗';
             }
         }
@@ -595,6 +617,8 @@
             
             document.getElementById('currentAppName').textContent = app.appName;
             document.getElementById('currentAppStatus').textContent = `状態: ${app.status} | 応答時間: ${app.responseTime}ms`;
+            document.getElementById('currentAppNameFallback').textContent = app.appName;
+            document.getElementById('currentAppStatusFallback').textContent = `状態: ${app.status} | 応答時間: ${app.responseTime}ms`;
             document.getElementById('headerAppName').textContent = app.appName;
             document.getElementById('headerAppUrl').textContent = app.url;
             
