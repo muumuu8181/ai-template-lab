@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔥 Firebase アプリレビューツール v0.2 - コントロール下部&60%表示</title>
+    <title>🔥 Firebase アプリレビューツール v0.2 - 60%倍率表示</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; background: #f5f6fa; }
@@ -44,13 +44,13 @@
         .stats-item { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
         .app-display { width: 40% !important; display: flex; flex-direction: column; background: white; }
         .app-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .app-wrapper { width: 60%; height: 60%; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; background: #f9f9f9; }
+        .app-wrapper { width: 90%; height: 80%; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; background: #f9f9f9; }
         .app-header { background: #2f3542; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         .app-url { font-size: 0.9rem; opacity: 0.8; }
         .app-controls { display: flex; gap: 10px; justify-content: center; padding: 15px; background: #f8f9fa; border-top: 1px solid #ddd; }
         .control-btn { padding: 8px 15px; background: #5352ed; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
         .control-btn:hover { background: #3742fa; }
-        .app-frame { width: 100%; height: 100%; border: none; background: white; }
+        .app-frame { width: 100%; height: 100%; border: none; background: white; transform: scale(0.6); transform-origin: 0 0; }
         .loading { display: flex; justify-content: center; align-items: center; height: 100%; font-size: 1.2rem; color: #747d8c; }
         .quick-rating { display: flex; gap: 10px; margin-top: 10px; }
         .quick-btn { flex: 1; padding: 8px; border: none; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s ease; }
@@ -87,7 +87,7 @@
             .container { flex-direction: row; }
             .review-panel { width: 60% !important; }
             .app-display { width: 40% !important; }
-            .app-wrapper { width: 60%; height: 60%; }
+            .app-wrapper { width: 90%; height: 80%; }
         }
         
         /* スマートフォン対応 */
@@ -193,15 +193,15 @@
         </div>
 
         <div class="app-display">
+            <div class="app-container">
+                <div class="app-wrapper">
+                    <iframe id="appFrame" class="app-frame" src="" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-popups-to-escape-sandbox"></iframe>
+                </div>
+            </div>
             <div class="app-header">
                 <div>
                     <div id="headerAppName">アプリ名</div>
                     <div class="app-url" id="headerAppUrl">URL</div>
-                </div>
-            </div>
-            <div class="app-container">
-                <div class="app-wrapper">
-                    <iframe id="appFrame" class="app-frame" src="" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-popups-to-escape-sandbox"></iframe>
                 </div>
             </div>
             <div class="app-controls">
