@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔥 Firebase アプリレビューツール v0.6</title>
+    <title>🔥 Firebase アプリレビューツール v0.7</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; background: #f5f6fa; }
@@ -281,16 +281,14 @@
         let currentIndex = 0;
         let reviews = {};
 
-        // Firebase初期化とエラーハンドリング（compat版）
+        // Firebase初期化とエラーハンドリング（simple-sync方式 - 認証なし）
         try {
             firebase.initializeApp(firebaseConfig);
-            auth = firebase.auth();
-            db = firebase.firestore();
             database = firebase.database();
             isFirebaseConnected = true;
-            console.log('🔥 Firebase接続成功');
+            console.log('🔥 Firebase接続成功 (認証なしモード)');
             
-            // 接続状態監視
+            // 接続状態監視（simple-sync方式）
             database.ref('.info/connected').on('value', (snap) => {
                 const isOnline = snap.val() === true;
                 const statusEl = document.getElementById('syncStatus');
@@ -300,6 +298,9 @@
                         : '<span class="sync-offline">⚪ オフライン</span>';
                 }
             });
+            
+            // 認証なしで即座にデータ読み込み開始
+            loadFirebaseReviews();
             
         } catch (error) {
             console.error('❌ Firebase接続エラー:', error);
@@ -344,46 +345,26 @@
             }
         };
 
-        // 認証状態監視（Google認証必須、compat版）
+        // 認証なしモード - 認証セクションを非表示にして直接開始
         if (isFirebaseConnected) {
-            auth.onAuthStateChanged((user) => {
-                currentUser = user;
-                if (user && !user.isAnonymous) {
-                    document.getElementById('authSection').style.display = 'none';
-                    document.getElementById('userAppInfo').style.display = 'flex';
-                    document.getElementById('appInfoFallback').style.display = 'none';
-                    
-                    // ユーザー情報表示（Googleアカウント情報）
-                    const displayName = user.displayName || user.email || 'Googleユーザー';
-                    document.getElementById('userDisplay').textContent = displayName;
-                    
-                    // Googleアバター表示
-                    if (user.photoURL) {
-                        const avatar = document.getElementById('userAvatar');
-                        avatar.src = user.photoURL;
-                        avatar.style.display = 'block';
-                    }
-                    
-                    // リアルタイム同期開始
-                    loadFirebaseReviews();
-                    console.log('🔄 リアルタイム同期開始:', user.email);
-                } else {
-                    // 未認証または匿名ユーザーは認証画面を表示
-                    document.getElementById('authSection').style.display = 'block';
-                    document.getElementById('userAppInfo').style.display = 'none';
-                    document.getElementById('appInfoFallback').style.display = 'block';
-                    reviews = {};
-                    console.log('⚠️ Google認証が必要です');
-                }
-            });
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('userAppInfo').style.display = 'flex';
+            document.getElementById('appInfoFallback').style.display = 'none';
+            
+            // 匿名ユーザーとして表示
+            document.getElementById('userDisplay').textContent = '匿名ユーザー (認証なし)';
+            document.getElementById('userAvatar').style.display = 'none';
+            
+            console.log('🔄 認証なしモードで同期開始');
         }
 
-        // Firebaseからレビューデータ読み込み（Realtime Database版）
+        // Firebaseからレビューデータ読み込み（認証なしモード）
         async function loadFirebaseReviews() {
-            if (!isFirebaseConnected || !currentUser) return;
+            if (!isFirebaseConnected) return;
 
             try {
-                const reviewsRef = database.ref(`app-reviews/${currentUser.uid}`);
+                // 認証なしで共有データベースにアクセス（simple-sync方式）
+                const reviewsRef = database.ref('app-reviews-shared');
                 
                 reviewsRef.on('value', (snapshot) => {
                     const data = snapshot.val() || {};
@@ -397,21 +378,21 @@
             }
         }
 
-        // Firebaseにレビューデータ保存（Realtime Database版）
+        // Firebaseにレビューデータ保存（認証なしモード）
         async function saveFirebaseReview(appName, reviewData) {
-            if (!isFirebaseConnected || !currentUser) return false;
+            if (!isFirebaseConnected) return false;
 
             try {
                 const reviewDoc = {
-                    userId: currentUser.uid,
                     appName: appName,
                     ...reviewData,
                     timestamp: new Date().toISOString(),
-                    deviceInfo: navigator.userAgent
+                    deviceInfo: navigator.userAgent,
+                    sessionId: 'anonymous-' + Date.now()
                 };
 
-                await database.ref(`app-reviews/${currentUser.uid}/${appName}`).set(reviewDoc);
-                console.log('💾 Firebase保存成功:', appName);
+                await database.ref(`app-reviews-shared/${appName}`).set(reviewDoc);
+                console.log('💾 Firebase保存成功 (認証なし):', appName);
                 return true;
             } catch (error) {
                 console.error('❌ Firebase保存エラー:', error);
@@ -682,12 +663,8 @@
             }
         }
 
-        // レビュー保存（Google認証必須）
+        // レビュー保存（認証なしモード）
         window.saveReview = async function() {
-            if (!currentUser || currentUser.isAnonymous) {
-                alert('Google認証が必要です。まずログインしてください。');
-                return;
-            }
 
             const appId = apps[currentIndex].appName;
             if (!reviews[appId]) reviews[appId] = {};
@@ -714,23 +691,20 @@
             updateStats();
         };
 
-        // ローカルレビュー読み込み（Google認証時は使用しない）
+        // ローカルレビュー読み込み（認証なしモード - バックアップ用）
         function loadReviews() {
-            // Google認証済みの場合はFirebaseから読み込むため、ローカルデータは使用しない
-            if (currentUser && !currentUser.isAnonymous) {
-                console.log('🔄 Google認証済み - Firebaseからデータを読み込みます');
-                return;
-            }
-            
-            // 未認証の場合のみローカルデータを参照（表示のみ）
+            // 認証なしモードではFirebaseメインだが、ローカルをバックアップとして使用
             const saved = localStorage.getItem('appReviews');
             if (saved) {
                 try {
-                    reviews = JSON.parse(saved);
-                    console.log('📂 ローカルデータを参照（読み取り専用）');
+                    const localReviews = JSON.parse(saved);
+                    console.log('📂 ローカルバックアップデータを参照');
+                    // Firebaseデータが空の場合のみローカルデータを使用
+                    if (Object.keys(reviews).length === 0) {
+                        reviews = localReviews;
+                    }
                 } catch (error) {
                     console.error('❌ ローカルレビューデータ読み込みエラー:', error);
-                    reviews = {};
                 }
             }
         }
@@ -760,20 +734,15 @@
             return values.reduce((sum, value) => sum + value, 0) / values.length;
         }
 
-        // Firebase データ確認（Realtime Database版）
+        // Firebase データ確認（認証なしモード）
         window.checkFirebaseData = async function() {
-            if (!currentUser) {
-                alert('⚠️ ログインが必要です');
-                return;
-            }
-
             try {
-                const reviewsRef = database.ref(`app-reviews/${currentUser.uid}`);
+                const reviewsRef = database.ref('app-reviews-shared');
                 const snapshot = await reviewsRef.once('value');
                 const data = snapshot.val() || {};
                 
-                let message = `📊 Firebaseデータ確認結果:\n\n`;
-                message += `👤 ユーザー: ${currentUser.email}\n`;
+                let message = `📊 Firebaseデータ確認結果 (認証なしモード):\n\n`;
+                message += `👤 ユーザー: 匿名ユーザー\n`;
                 message += `📝 保存済みレビュー: ${Object.keys(data).length}件\n\n`;
                 
                 if (Object.keys(data).length > 0) {
