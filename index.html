@@ -53,11 +53,11 @@
         .app-display { width: 40% !important; display: flex; flex-direction: column; background: white; }
         .app-container { width: 100%; height: 100%; display: flex; justify-content: flex-start; align-items: flex-start; }
         .app-wrapper { width: 100%; height: 100%; border: none; overflow: hidden; background: white; }
-        .app-header { background: #2f3542; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .app-url { font-size: 0.9rem; opacity: 0.8; }
-        .app-controls { display: flex; gap: 10px; justify-content: center; padding: 8px; background: #f8f9fa; border-top: 1px solid #ddd; }
-        .control-btn { padding: 8px 15px; background: #5352ed; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
-        .control-btn:hover { background: #3742fa; }
+        .app-header-compact { background: #2f3542; color: white; padding: 8px 15px; }
+        .app-title-line { font-size: 0.8rem; opacity: 0.9; }
+        .app-controls-bottom { background: #f5f6fa; padding: 8px 15px; display: flex; gap: 8px; border-bottom: 1px solid #ddd; }
+        .control-btn-small { padding: 5px 10px; background: #5352ed; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+        .control-btn-small:hover { background: #3742fa; }
         .app-frame { width: 166.67%; height: 166.67%; border: none; background: white; transform: scale(0.6); transform-origin: 0 0; }
         .loading { display: flex; justify-content: center; align-items: center; height: 100%; font-size: 1.2rem; color: #747d8c; }
         .quick-title-row { display: flex; justify-content: space-between; align-items: center; }
@@ -84,7 +84,13 @@
         .email-form button { width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 5px; background: #2ed573; color: white; cursor: pointer; font-weight: bold; }
         
         .user-info { background: #2ed573; color: white; padding: 10px 15px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .user-app-info { background: #57606f; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; }
+        .user-app-info { background: #57606f; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+        .top-left-section { display: flex; align-items: center; gap: 15px; flex: 1; }
+        .top-nav-section { display: flex; gap: 5px; }
+        .nav-btn { background: #5352ed; color: white; border: none; border-radius: 5px; padding: 6px 10px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s ease; }
+        .nav-btn:hover { background: #3742fa; transform: translateY(-1px); }
+        .nav-save { background: #2ed573; }
+        .nav-save:hover { background: #26d0ce; }
         .user-section { display: flex; align-items: center; gap: 8px; min-width: 0; }
         .user-avatar { width: 30px; height: 30px; border-radius: 50%; }
         .user-name { font-weight: bold; flex: 1; font-size: 0.85rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
