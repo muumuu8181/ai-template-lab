@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔥 Firebase アプリレビューツール v0.2</title>
+    <title>🔥 Firebase アプリレビューツール v0.2 - 6:4レイアウト</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; background: #f5f6fa; }
         .container { display: flex; height: 100vh; }
-        .review-panel { width: 80% !important; background: #2f3542; color: white; padding: 20px; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        .review-panel { width: 60% !important; background: #2f3542; color: white; padding: 20px; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #57606f; padding-bottom: 15px; }
         .header h1 { font-size: 1.3rem; color: #5352ed; margin-bottom: 5px; }
         .sync-status { font-size: 0.8rem; opacity: 0.8; margin-top: 5px; }
@@ -42,7 +42,7 @@
         .stats-section { background: #3d4454; padding: 15px; border-radius: 10px; margin-top: 20px; }
         .stats-title { font-weight: bold; margin-bottom: 10px; color: #a4b0be; }
         .stats-item { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
-        .app-display { width: 20% !important; display: flex; flex-direction: column; background: white; }
+        .app-display { width: 40% !important; display: flex; flex-direction: column; background: white; }
         .app-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .app-wrapper { width: 90%; height: 80%; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; background: #f9f9f9; }
         .app-header { background: #2f3542; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -85,8 +85,8 @@
         /* Androidタブレット対応 (8インチ 800x1280px 縦向き) */
         @media (max-width: 900px) and (orientation: portrait) {
             .container { flex-direction: row; }
-            .review-panel { width: 80% !important; }
-            .app-display { width: 20% !important; }
+            .review-panel { width: 60% !important; }
+            .app-display { width: 40% !important; }
             .app-wrapper { width: 90%; height: 80%; }
         }
         
