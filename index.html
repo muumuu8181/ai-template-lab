@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔥 Firebase アプリレビューツール v0.7</title>
+    <title>🔥 Firebase アプリレビューツール v0.8</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; background: #f5f6fa; }
@@ -41,8 +41,28 @@
         .memo-textarea:focus { outline: none; border-color: #5352ed; box-shadow: 0 0 0 2px rgba(83, 82, 237, 0.2); }
         .button-section { display: flex; gap: 10px; margin-bottom: 10px; }
         .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; font-size: 0.9rem; }
-        .btn-save { background: #2ed573; color: white; }
+        .btn-save { background: #2ed573; color: white; position: relative; overflow: hidden; }
         .btn-save:hover { background: #26d0ce; transform: translateY(-2px); }
+        .btn-save.saving { background: #5352ed; animation: pulse 0.8s infinite; }
+        .btn-save.success { background: #27ae60; animation: bounce 0.5s ease; }
+        .btn-save.error { background: #e74c3c; animation: shake 0.5s ease; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 60%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-8px); }
+            80% { transform: translateY(-4px); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+            20%, 40%, 60%, 80% { transform: translateX(4px); }
+        }
         .btn-next { background: #5352ed; color: white; }
         .btn-next:hover { background: #3742fa; transform: translateY(-2px); }
         .btn-prev { background: #747d8c; color: white; }
@@ -94,8 +114,11 @@
         .bottom-nav-btn { background: #5352ed; color: white; border: none; border-radius: 5px; padding: 12px 30px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s ease; width: 180px; flex: 1; }
         .bottom-nav-btn:hover { background: #3742fa; transform: translateY(-1px); }
         .nav-btn:hover { background: #3742fa; transform: translateY(-1px); }
-        .bottom-nav-btn.nav-save { background: #2ed573; }
+        .bottom-nav-btn.nav-save { background: #2ed573; position: relative; overflow: hidden; }
         .bottom-nav-btn.nav-save:hover { background: #26d0ce; }
+        .bottom-nav-btn.nav-save.saving { background: #5352ed; animation: pulse 0.8s infinite; }
+        .bottom-nav-btn.nav-save.success { background: #27ae60; animation: bounce 0.5s ease; }
+        .bottom-nav-btn.nav-save.error { background: #e74c3c; animation: shake 0.5s ease; }
         .user-section { display: flex; align-items: center; gap: 8px; min-width: 0; }
         .user-avatar { width: 30px; height: 30px; border-radius: 50%; }
         .user-name { font-weight: bold; flex: 1; font-size: 0.85rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -583,6 +606,8 @@
 
         // 評価設定
         function setRating(category, value) {
+            playButtonSound('click');
+            
             const container = document.getElementById(category);
             const buttons = container.querySelectorAll('.rating-btn');
             buttons.forEach((btn, index) => {
@@ -600,6 +625,8 @@
 
         // クイック評価
         window.quickRating = function(rating) {
+            playButtonSound('click');
+            
             const appId = apps[currentIndex].appName;
             if (!reviews[appId]) reviews[appId] = {};
             reviews[appId].quickRating = rating;
@@ -663,29 +690,91 @@
             }
         }
 
+        // 音声フィードバック用関数
+        function playButtonSound(type = 'click') {
+            try {
+                // Web Audio API でビープ音を生成
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // 音の種類に応じて周波数を変更
+                switch(type) {
+                    case 'save':
+                        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                        break;
+                    case 'success':
+                        oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+                        oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.1);
+                        break;
+                    case 'error':
+                        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                        break;
+                    default:
+                        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                }
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (error) {
+                console.log('🔇 音声再生をスキップしました（非対応環境）');
+            }
+        }
+
         // レビュー保存（認証なしモード）
         window.saveReview = async function() {
-
+            playButtonSound('save');
+            
             const appId = apps[currentIndex].appName;
             if (!reviews[appId]) reviews[appId] = {};
             reviews[appId].memo = document.getElementById('memoTextarea').value;
             reviews[appId].timestamp = new Date().toISOString();
             
-            const saveBtn = document.querySelector('.btn-save');
+            const saveBtn = document.querySelector('.bottom-nav-btn.nav-save');
             const originalText = saveBtn.textContent;
+            const originalClass = saveBtn.className;
             
-            // Firebase保存（リアルタイム同期）
+            // 保存中の視覚的フィードバック
             saveBtn.textContent = '🔄 同期中...';
-            const success = await saveFirebaseReview(appId, reviews[appId]);
-            if (success) {
-                saveBtn.textContent = '✅ リアルタイム同期完了';
-                console.log('📱 他のデバイスに自動同期されました');
-            } else {
+            saveBtn.className = originalClass + ' saving';
+            
+            try {
+                // Firebase保存（リアルタイム同期）
+                const success = await saveFirebaseReview(appId, reviews[appId]);
+                
+                if (success) {
+                    // 成功エフェクト
+                    saveBtn.textContent = '✅ 同期完了';
+                    saveBtn.className = originalClass + ' success';
+                    playButtonSound('success');
+                    console.log('📱 他のデバイスに自動同期されました');
+                    
+                    // ローカルストレージにもバックアップ保存
+                    localStorage.setItem('appReviews', JSON.stringify(reviews));
+                } else {
+                    throw new Error('Firebase保存に失敗しました');
+                }
+            } catch (error) {
+                // エラーエフェクト
                 saveBtn.textContent = '❌ 同期エラー';
+                saveBtn.className = originalClass + ' error';
+                playButtonSound('error');
+                console.error('保存エラー:', error);
+                
+                // エラー時でもローカルには保存
+                localStorage.setItem('appReviews', JSON.stringify(reviews));
             }
             
+            // 1.5秒後に元の状態に戻る
             setTimeout(() => {
                 saveBtn.textContent = originalText;
+                saveBtn.className = originalClass;
             }, 1500);
             
             updateStats();
@@ -736,6 +825,7 @@
 
         // Firebase データ確認（認証なしモード）
         window.checkFirebaseData = async function() {
+            playButtonSound('click');
             try {
                 const reviewsRef = database.ref('app-reviews-shared');
                 const snapshot = await reviewsRef.once('value');
@@ -766,6 +856,7 @@
 
         // 更新ログ表示
         window.showUpdateLogs = async function() {
+            playButtonSound('click');
             try {
                 // GitHub API で最新の実行ログを取得
                 const response = await fetch('https://api.github.com/repos/muumuu8181/firebase-app-reviewer/actions/workflows/update-data.yml/runs?per_page=5');
@@ -802,6 +893,7 @@
 
         // ナビゲーション
         window.nextApp = function() {
+            playButtonSound('click');
             if (currentIndex < apps.length - 1) {
                 showApp(currentIndex + 1);
             } else {
@@ -810,6 +902,7 @@
         };
 
         window.previousApp = function() {
+            playButtonSound('click');
             if (currentIndex > 0) {
                 showApp(currentIndex - 1);
             } else {
@@ -819,11 +912,13 @@
 
         // アプリ制御
         window.reloadApp = function() {
+            playButtonSound('click');
             const iframe = document.getElementById('appFrame');
             iframe.src = iframe.src;
         };
 
         window.openInNewTab = function() {
+            playButtonSound('click');
             window.open(apps[currentIndex].url, '_blank');
         };
 
