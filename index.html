@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔥 Firebase アプリレビューツール v0.8</title>
+    <title>🔥 Firebase アプリレビューツール v0.9</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; background: #f5f6fa; }
@@ -88,6 +88,15 @@
         .quick-btn { width: 90px; height: 30px; border: none; border-radius: 15px; background: #57606f; color: white; font-size: 0.8rem; cursor: pointer; transition: all 0.2s ease; }
         .quick-btn:hover { background: #5352ed; transform: scale(1.1); }
         .quick-btn.active { background: #5352ed; box-shadow: 0 0 10px rgba(83, 82, 237, 0.5); }
+        
+        /* ズーム調整セクション */
+        .zoom-control-section { margin-bottom: 10px; }
+        .zoom-control-row { display: flex; justify-content: space-between; align-items: center; }
+        .zoom-title { font-weight: bold; color: #a4b0be; font-size: 0.9rem; }
+        .zoom-controls { display: flex; gap: 3px; align-items: center; }
+        .zoom-btn { width: 35px; height: 25px; border: none; border-radius: 4px; background: #57606f; color: white; font-size: 0.7rem; cursor: pointer; transition: all 0.2s ease; }
+        .zoom-btn:hover { background: #5352ed; transform: scale(1.05); }
+        .zoom-display { background: #3d4454; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; min-width: 50px; text-align: center; }
         
         /* 認証セクション */
         .auth-section { background: #3742fa; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
@@ -190,6 +199,21 @@
             <div class="app-info" id="appInfoFallback">
                 <div class="app-name" id="currentAppNameFallback">アプリを読み込み中...</div>
                 <div class="app-status" id="currentAppStatusFallback">状態: 確認中</div>
+            </div>
+
+            <!-- ズーム調整セクション -->
+            <div class="zoom-control-section">
+                <div class="zoom-control-row">
+                    <div class="zoom-title">🔍 全体ズーム調整</div>
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" onclick="adjustZoom(-5)">-5%</button>
+                        <button class="zoom-btn" onclick="adjustZoom(-1)">-1%</button>
+                        <div class="zoom-display" id="zoomDisplay">100%</div>
+                        <button class="zoom-btn" onclick="adjustZoom(1)">+1%</button>
+                        <button class="zoom-btn" onclick="adjustZoom(5)">+5%</button>
+                        <button class="zoom-btn" onclick="resetZoom()">リセット</button>
+                    </div>
+                </div>
             </div>
 
             <div class="rating-section">
@@ -303,6 +327,7 @@
         let apps = [];
         let currentIndex = 0;
         let reviews = {};
+        let currentZoomLevel = 100; // 全体ズームレベル（%）
 
         // Firebase初期化とエラーハンドリング（simple-sync方式 - 認証なし）
         try {
@@ -952,8 +977,73 @@
             }
         });
 
+        // ズーム調整機能
+        window.adjustZoom = function(change) {
+            playButtonSound('click');
+            currentZoomLevel = Math.max(50, Math.min(150, currentZoomLevel + change));
+            applyZoom();
+            updateZoomDisplay();
+        };
+
+        window.resetZoom = function() {
+            playButtonSound('click');
+            currentZoomLevel = 100;
+            applyZoom();
+            updateZoomDisplay();
+        };
+
+        function applyZoom() {
+            const zoomValue = currentZoomLevel / 100;
+            const reviewPanel = document.querySelector('.review-panel');
+            
+            // 元の zoom: 0.7 をベースにして、さらに全体ズーム調整を適用
+            const baseZoom = 0.7; // 元々設定されていた左パネルのズーム値
+            const finalZoom = baseZoom * zoomValue;
+            
+            reviewPanel.style.zoom = finalZoom;
+            
+            // ズームが小さい場合は余白を調整
+            document.body.style.overflow = currentZoomLevel < 100 ? 'auto' : 'hidden';
+        }
+
+        function updateZoomDisplay() {
+            document.getElementById('zoomDisplay').textContent = currentZoomLevel + '%';
+        }
+
+        function initZoom() {
+            updateZoomDisplay();
+            // ローカルストレージからズームレベルを復元
+            const savedZoom = localStorage.getItem('appReviewerZoomLevel');
+            if (savedZoom) {
+                currentZoomLevel = parseInt(savedZoom);
+                applyZoom();
+                updateZoomDisplay();
+            }
+        }
+
+        // ズームレベル変更時にローカルストレージに保存
+        function saveZoomLevel() {
+            localStorage.setItem('appReviewerZoomLevel', currentZoomLevel.toString());
+        }
+
+        // 既存のadjustZoom関数を更新してローカルストレージ保存を追加
+        const originalAdjustZoom = window.adjustZoom;
+        window.adjustZoom = function(change) {
+            originalAdjustZoom(change);
+            saveZoomLevel();
+        };
+
+        const originalResetZoom = window.resetZoom;
+        window.resetZoom = function() {
+            originalResetZoom();
+            saveZoomLevel();
+        };
+
         // 初期化実行
         init();
+        
+        // ズーム初期化
+        initZoom();
     </script>
 </body>
 </html>
