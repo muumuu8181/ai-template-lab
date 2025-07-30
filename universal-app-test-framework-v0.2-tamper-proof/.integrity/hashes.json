@@ -1,0 +1,32 @@
+{
+  "core/api/test-api.js": {
+    "hash": "10d372693a60aba8d22c059e69b83c3925c2933195f899e3b4b7a29762413742",
+    "timestamp": "2025-07-30T06:46:36.341Z",
+    "protected": true
+  },
+  "core/api/test-cli.js": {
+    "hash": "f0b3fcf2748b7002b199c9b418d2156c3d6f1bc25ef2827d51a6b33c83128430",
+    "timestamp": "2025-07-30T06:46:36.345Z",
+    "protected": true
+  },
+  "core/engine/audit-logger.js": {
+    "hash": "ae25c90f8626986dc21284083050edc1eada5c1a86f450ed1a8ca95f2128fe74",
+    "timestamp": "2025-07-30T06:46:36.351Z",
+    "protected": true
+  },
+  "core/engine/integrity.js": {
+    "hash": "acb0bdcc1ecbf71b5fcc9b6f0f3fb06aed67f8cead7c8d6608566af192435c61",
+    "timestamp": "2025-07-30T06:46:36.354Z",
+    "protected": true
+  },
+  "core/engine/test-registry.js": {
+    "hash": "d903afa618a9ec1442b1f0dec8523aaa4ac22d5582f1155ba41eac81d0177d26",
+    "timestamp": "2025-07-30T06:46:36.357Z",
+    "protected": true
+  },
+  "core/setup.js": {
+    "hash": "c92a1b5f2d862a9985555ce43fb1fd66e7f17539d0f70d5dea9a4cb8959508eb",
+    "timestamp": "2025-07-30T06:46:36.360Z",
+    "protected": true
+  }
+}
