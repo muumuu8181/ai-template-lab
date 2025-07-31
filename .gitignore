@@ -1,0 +1,16 @@
+# テンポラリファイル
+snapshot_*/
+diff_reports/
+test-*.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ログファイル
+*.log
+
+# OS関連
+.DS_Store
+Thumbs.db
