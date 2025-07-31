@@ -1,4 +1,4 @@
-# AI Template Lab v0.5
+# AI Template Lab v0.6
 
 ## チーム
 - **マネジメントチーム**: ルールを設定する
