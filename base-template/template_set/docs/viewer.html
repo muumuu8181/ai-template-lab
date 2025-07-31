@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdownビューワー</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.7.0/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            padding: 25px 20px;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 18px 25px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            color: white;
+            border-left: 4px solid #ecf0f1;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .content-area {
+            padding: 40px;
+            max-width: none;
+        }
+
+        .document {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            line-height: 1.6;
+            min-height: 500px;
+        }
+
+        .document h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+
+        .document h2 {
+            color: #34495e;
+            margin-top: 35px;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+
+        .document h3 {
+            color: #34495e;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .document p {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .document ul, .document ol {
+            margin-bottom: 20px;
+            padding-left: 30px;
+        }
+
+        .document li {
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .document code {
+            background: #f1f2f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #e74c3c;
+            font-family: 'Courier New', monospace;
+        }
+
+        .document pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .document pre code {
+            background: none;
+            color: #ecf0f1;
+            padding: 0;
+        }
+
+        .document table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .document th, .document td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .document th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+
+        .document tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .mermaid {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        .status-success {
+            background: #27ae60;
+        }
+
+        .status-error {
+            background: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <h2>📋 プロジェクト管理</h2>
+            <a class="nav-item active" data-file="README.md">📖 README</a>
+            <a class="nav-item" data-file="requirements_spec.md">📋 要件仕様</a>
+            <a class="nav-item" data-file="work_log.md">📝 作業ログ</a>
+            <a class="nav-item" data-file="version_history.md">📅 バージョン履歴</a>
+            <a class="nav-item" data-file="todo_list.md">✅ Todoリスト</a>
+            <a class="nav-item" data-file="reflection.md">🤔 振り返り</a>
+            <a class="nav-item" data-file="rules.md">📜 作業ルール</a>
+            <a class="nav-item" data-file="prompts.md">💬 プロンプトログ</a>
+            <a class="nav-item" data-file="tests.md">🧪 テストログ</a>
+            <a class="nav-item" data-file="knowledge.md">🧠 共通ナレッジ</a>
+        </nav>
+        
+        <main class="content">
+            <div class="content-area">
+                <div id="document-content" class="document">
+                    <div class="loading">📖 README.md を読み込み中...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+
+        let currentFile = 'README.md';
+
+        // Status message display
+        function showStatus(message, isError = false) {
+            const existing = document.querySelector('.status-message');
+            if (existing) existing.remove();
+            
+            const div = document.createElement('div');
+            div.className = `status-message ${isError ? 'status-error' : 'status-success'}`;
+            div.textContent = message;
+            document.body.appendChild(div);
+            
+            setTimeout(() => div.remove(), 3000);
+        }
+
+        // Load markdown file
+        async function loadMarkdownFile(filename) {
+            const contentDiv = document.getElementById('document-content');
+            contentDiv.innerHTML = `<div class="loading">📄 ${filename} を読み込み中...</div>`;
+            
+            try {
+                const response = await fetch(filename);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const text = await response.text();
+                
+                // Parse markdown
+                const html = marked.parse(text);
+                contentDiv.innerHTML = html;
+                
+                // Process Mermaid diagrams
+                const mermaidElements = contentDiv.querySelectorAll('code.language-mermaid');
+                mermaidElements.forEach((element, index) => {
+                    const code = element.textContent;
+                    const div = document.createElement('div');
+                    div.className = 'mermaid';
+                    div.textContent = code;
+                    element.parentElement.replaceWith(div);
+                });
+                
+                // Re-initialize Mermaid
+                mermaid.init(undefined, contentDiv.querySelectorAll('.mermaid'));
+                
+                showStatus(`✓ ${filename} 読み込み成功`);
+                
+            } catch (error) {
+                console.error(`Error loading ${filename}:`, error);
+                contentDiv.innerHTML = `
+                    <div class="error">
+                        <h2>❌ ファイル読み込みエラー</h2>
+                        <p><strong>ファイル:</strong> ${filename}</p>
+                        <p><strong>エラー:</strong> ${error.message}</p>
+                        <p><strong>解決方法:</strong></p>
+                        <ul>
+                            <li>ローカルサーバーが起動しているか確認してください</li>
+                            <li>ブラウザのアドレスが http://localhost:8080/simple_viewer.html になっているか確認してください</li>
+                            <li>ファイルが存在するか確認してください</li>
+                        </ul>
+                    </div>
+                `;
+                showStatus(`✗ ${filename} 読み込み失敗`, true);
+            }
+        }
+
+        // Navigation handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const filename = this.getAttribute('data-file');
+                    
+                    // Update navigation
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Load content
+                    currentFile = filename;
+                    loadMarkdownFile(filename);
+                });
+            });
+            
+            // Load initial content
+            loadMarkdownFile(currentFile);
+        });
+
+        // Auto-reload functionality for development
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                loadMarkdownFile(currentFile);
+            }
+        }, 30000); // Reload every 30 seconds
+    </script>
+</body>
+</html>

@@ -208,31 +208,12 @@
                 <button onclick="handleError()">エラーを発生させる</button>
                 <div id="error-result" class="result-box">エラー結果がここに表示されます</div>
             </div>
-
-            <div class="demo-section">
-                <h2>新機能: カウンター</h2>
-                <button id="increment-btn" onclick="incrementCounter()">+1</button>
-                <button id="decrement-btn" onclick="decrementCounter()">-1</button>
-                <button id="reset-btn" onclick="resetCounter()">リセット</button>
-                <div id="counter-display" class="result-box">カウント: <span id="counter-value">0</span></div>
-            </div>
-
-            <div class="demo-section">
-                <h2>新機能: チェックボックス選択</h2>
-                <label><input type="checkbox" id="check-1" onchange="updateCheckboxes()"> オプション1</label><br>
-                <label><input type="checkbox" id="check-2" onchange="updateCheckboxes()"> オプション2</label><br>
-                <label><input type="checkbox" id="check-3" onchange="updateCheckboxes()"> オプション3</label>
-                <div id="checkbox-result" class="result-box">選択済み: なし</div>
-            </div>
         </div>
 
         <div class="log-panel">
             <div class="log-header">
                 <h3>📋 操作ログ</h3>
-                <div>
-                    <button class="copy-button" onclick="copyLogs()">ログをコピー</button>
-                    <button class="copy-button" onclick="downloadLogs()">ダウンロード</button>
-                </div>
+                <button class="copy-button" onclick="copyLogs()">ログをコピー</button>
             </div>
             <div id="log-entries" class="log-entries">
                 <!-- ログエントリーがここに追加される -->
@@ -347,50 +328,6 @@
             }
         }
 
-        // カウンター機能
-        let counter = 0;
-
-        function incrementCounter() {
-            counter++;
-            updateCounterDisplay();
-            logger.addLog('カウンター操作', `カウンターを増加: ${counter}`);
-        }
-
-        function decrementCounter() {
-            counter--;
-            updateCounterDisplay();
-            logger.addLog('カウンター操作', `カウンターを減少: ${counter}`);
-        }
-
-        function resetCounter() {
-            counter = 0;
-            updateCounterDisplay();
-            logger.addLog('カウンター操作', 'カウンターをリセット');
-        }
-
-        function updateCounterDisplay() {
-            document.getElementById('counter-value').textContent = counter;
-        }
-
-        // チェックボックス機能
-        function updateCheckboxes() {
-            const checkboxes = [
-                document.getElementById('check-1'),
-                document.getElementById('check-2'),
-                document.getElementById('check-3')
-            ];
-            
-            const selected = checkboxes
-                .filter((cb, index) => cb.checked)
-                .map((cb, index) => `オプション${checkboxes.indexOf(cb) + 1}`)
-                .join(', ');
-            
-            const resultText = selected || 'なし';
-            document.getElementById('checkbox-result').textContent = `選択済み: ${resultText}`;
-            
-            logger.addLog('チェックボックス変更', `選択: ${resultText}`);
-        }
-
         function copyLogs() {
             const logText = logger.getFormattedLogs();
             
@@ -409,29 +346,6 @@
                 logger.addLog('コピーエラー', 'クリップボードへのアクセスに失敗しました', 'error');
                 alert('ログのコピーに失敗しました。手動で選択してコピーしてください。');
             });
-        }
-
-        function downloadLogs() {
-            const logText = logger.getFormattedLogs();
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = `app-logs-${timestamp}.txt`;
-            
-            // 常にデフォルトダウンロードフォルダに保存（フォルダ選択なし）
-            const blob = new Blob([logText], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.style.display = 'none';
-            
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            URL.revokeObjectURL(url);
-            
-            logger.addLog('ログをダウンロード', `ファイル名: ${filename} (デフォルトフォルダ)`);
         }
 
         // ページ離脱時のログ
