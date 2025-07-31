@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual JS Patterns - ビジュアルライブラリ比較デモ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #a0a0a0;
+        }
+
+        .library-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .library-card {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .library-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .library-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .library-card:hover {
+            transform: translateY(-10px);
+            border-color: #4facfe;
+            box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3);
+        }
+
+        .library-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .library-card h2 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            color: #4facfe;
+        }
+
+        .library-card p {
+            color: #a0a0a0;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .demo-link {
+            display: inline-block;
+            padding: 10px 25px;
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            color: #000;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .demo-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .log-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4facfe;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .log-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .log-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: #0f0f0f;
+            border-left: 2px solid #4facfe;
+            transition: right 0.3s ease;
+            z-index: 999;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .log-panel.active {
+            right: 0;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .log-header h3 {
+            font-size: 1.2em;
+            color: #4facfe;
+        }
+
+        .copy-button {
+            background: #4facfe;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .copy-button:hover {
+            transform: scale(1.05);
+        }
+
+        .log-entries {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(79, 172, 254, 0.1);
+            border-radius: 4px;
+            border-left: 3px solid #4facfe;
+        }
+
+        .log-time {
+            color: #4facfe;
+            font-weight: bold;
+        }
+
+        .log-action {
+            color: #00f2fe;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4facfe;
+            color: #000;
+            padding: 15px 20px;
+            border-radius: 25px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1001;
+            font-weight: bold;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .version-display {
+            position: fixed;
+            top: 20px;
+            right: 80px;
+            background: rgba(26, 26, 46, 0.9);
+            color: #4facfe;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .library-grid {
+                padding: 20px;
+                gap: 20px;
+            }
+
+            .log-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="version-display">v0.5</div>
+    <div class="header">
+        <h1>Visual JS Patterns</h1>
+        <p>様々なJavaScriptビジュアルライブラリの比較デモ</p>
+    </div>
+
+    <div class="library-grid">
+        <div class="library-card" onclick="navigateToDemo('three')">
+            <span class="library-icon">🎲</span>
+            <h2>Three.js</h2>
+            <p>3Dグラフィックスの定番ライブラリ。WebGLを使った回転する3Dキューブのデモ</p>
+            <a href="three.html" class="demo-link" onclick="event.stopPropagation()">デモを見る</a>
+        </div>
+
+        <div class="library-card" onclick="navigateToDemo('d3')">
+            <span class="library-icon">📊</span>
+            <h2>D3.js</h2>
+            <p>データビジュアライゼーションの強力なライブラリ。動的なバーチャートのデモ</p>
+            <a href="d3.html" class="demo-link" onclick="event.stopPropagation()">デモを見る</a>
+        </div>
+
+        <div class="library-card" onclick="navigateToDemo('p5')">
+            <span class="library-icon">🎨</span>
+            <h2>p5.js</h2>
+            <p>クリエイティブコーディング向けライブラリ。インタラクティブなアートのデモ</p>
+            <a href="p5.html" class="demo-link" onclick="event.stopPropagation()">デモを見る</a>
+        </div>
+
+        <div class="library-card" onclick="navigateToDemo('chart')">
+            <span class="library-icon">📈</span>
+            <h2>Chart.js</h2>
+            <p>シンプルで美しいチャート作成ライブラリ。アニメーション付きチャートのデモ</p>
+            <a href="chart.html" class="demo-link" onclick="event.stopPropagation()">デモを見る</a>
+        </div>
+
+        <div class="library-card" onclick="navigateToDemo('gsap')">
+            <span class="library-icon">🚀</span>
+            <h2>GSAP</h2>
+            <p>高性能なアニメーションライブラリ。スムーズなDOM要素アニメーションのデモ</p>
+            <a href="gsap.html" class="demo-link" onclick="event.stopPropagation()">デモを見る</a>
+        </div>
+
+        <div class="library-card" onclick="navigateToDemo('anime')">
+            <span class="library-icon">✨</span>
+            <h2>Anime.js</h2>
+            <p>軽量で使いやすいアニメーションライブラリ。エレガントな動きのデモ</p>
+            <a href="anime.html" class="demo-link" onclick="event.stopPropagation()">デモを見る</a>
+        </div>
+    </div>
+
+    <button class="log-toggle" onclick="toggleLog()">📋 操作ログ</button>
+
+    <div id="log-panel" class="log-panel">
+        <div class="log-header">
+            <h3>📋 操作ログ</h3>
+            <button class="copy-button" onclick="copyLogs()">コピー</button>
+        </div>
+        <div id="log-entries" class="log-entries"></div>
+    </div>
+
+    <div id="toast" class="toast">ログをコピーしました！</div>
+
+    <script>
+        // ログ管理システム
+        class OperationLogger {
+            constructor() {
+                this.logs = [];
+                this.logContainer = document.getElementById('log-entries');
+                this.addLog('system', 'Visual JS Patterns を起動しました');
+            }
+
+            addLog(action, details, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString('ja-JP');
+                const logEntry = {
+                    timestamp,
+                    action,
+                    details,
+                    type
+                };
+                
+                this.logs.push(logEntry);
+                this.renderLog(logEntry);
+                this.scrollToBottom();
+            }
+
+            renderLog(entry) {
+                const logDiv = document.createElement('div');
+                logDiv.className = `log-entry ${entry.type === 'error' ? 'log-error' : ''}`;
+                
+                let logHTML = `<span class="log-time">[${entry.timestamp}]</span> `;
+                logHTML += `<span class="log-action">${entry.action}</span>`;
+                
+                if (entry.details) {
+                    logHTML += ` → ${entry.details}`;
+                }
+                
+                logDiv.innerHTML = logHTML;
+                this.logContainer.appendChild(logDiv);
+            }
+
+            scrollToBottom() {
+                this.logContainer.scrollTop = this.logContainer.scrollHeight;
+            }
+
+            getFormattedLogs() {
+                return this.logs.map(log => {
+                    let text = `[${log.timestamp}] ${log.action}`;
+                    if (log.details) {
+                        text += ` → ${log.details}`;
+                    }
+                    return text;
+                }).join('\n');
+            }
+        }
+
+        const logger = new OperationLogger();
+
+        function navigateToDemo(library) {
+            const libraryNames = {
+                'three': 'Three.js',
+                'd3': 'D3.js',
+                'p5': 'p5.js',
+                'chart': 'Chart.js',
+                'gsap': 'GSAP',
+                'anime': 'Anime.js'
+            };
+            
+            logger.addLog('ライブラリ選択', `${libraryNames[library]} を選択しました`);
+            setTimeout(() => {
+                window.location.href = `${library}.html`;
+            }, 300);
+        }
+
+        function toggleLog() {
+            const panel = document.getElementById('log-panel');
+            panel.classList.toggle('active');
+            logger.addLog('ログパネル', panel.classList.contains('active') ? '開きました' : '閉じました');
+        }
+
+        function copyLogs() {
+            const logText = logger.getFormattedLogs();
+            
+            navigator.clipboard.writeText(logText).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                
+                logger.addLog('ログをコピー', 'クリップボードにコピーしました');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2000);
+            }).catch(err => {
+                logger.addLog('コピーエラー', 'クリップボードへのアクセスに失敗しました', 'error');
+            });
+        }
+
+        // ページ読み込み完了
+        window.addEventListener('load', () => {
+            logger.addLog('system', 'すべてのコンポーネントが読み込まれました');
+        });
+    </script>
+</body>
+</html>

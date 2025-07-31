@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSAP デモ - Visual JS Patterns</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        #animation-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .animated-element {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            border-radius: 15px;
+            margin: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(26, 26, 46, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .controls h2 {
+            margin-bottom: 15px;
+            color: #4facfe;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 26, 46, 0.9);
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            color: #4facfe;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .back-button:hover {
+            transform: scale(1.05);
+            background: rgba(79, 172, 254, 0.2);
+        }
+
+        .info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(26, 26, 46, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #a0a0a0;
+            z-index: 100;
+        }
+
+        .log-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4facfe;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .log-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: rgba(15, 15, 15, 0.95);
+            border-left: 2px solid #4facfe;
+            transition: right 0.3s ease;
+            z-index: 999;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .log-panel.active {
+            right: 0;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .log-entries {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(79, 172, 254, 0.1);
+            border-radius: 4px;
+            border-left: 3px solid #4facfe;
+        }
+
+        .version-display {
+            position: fixed;
+            top: 20px;
+            right: 80px;
+            background: rgba(26, 26, 46, 0.9);
+            color: #4facfe;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .timeline-display {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            background: rgba(26, 26, 46, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #a0a0a0;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="version-display">v0.5</div>
+    <div id="animation-container">
+        <div class="animated-element" id="box1">1</div>
+        <div class="animated-element" id="box2">2</div>
+        <div class="animated-element" id="box3">3</div>
+        <div class="animated-element" id="box4">4</div>
+        <div class="animated-element" id="box5">5</div>
+    </div>
+
+    <div class="controls">
+        <h2>GSAP コントロール</h2>
+        
+        <div class="control-group">
+            <button onclick="animateRotate()">回転</button>
+            <button onclick="animateScale()">拡大縮小</button>
+            <button onclick="animateBounce()">バウンス</button>
+        </div>
+
+        <div class="control-group">
+            <button onclick="animateStagger()">順次アニメーション</button>
+            <button onclick="animateTimeline()">タイムライン</button>
+            <button onclick="animatePhysics()">物理演算</button>
+        </div>
+
+        <div class="control-group">
+            <button onclick="resetElements()">リセット</button>
+            <button onclick="pauseAll()">一時停止</button>
+            <button onclick="resumeAll()">再開</button>
+        </div>
+    </div>
+
+    <a href="index.html" class="back-button">← 戻る</a>
+
+    <div class="info">
+        GSAPの高性能アニメーションライブラリのデモ
+    </div>
+
+    <div class="timeline-display" id="timeline-info">
+        タイムライン: 停止中
+    </div>
+
+    <button class="log-toggle" onclick="toggleLog()">📋 操作ログ</button>
+
+    <div id="log-panel" class="log-panel">
+        <div class="log-header">
+            <h3>📋 操作ログ</h3>
+            <button onclick="copyLogs()" style="background: #4facfe; color: #000; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer;">コピー</button>
+        </div>
+        <div id="log-entries" class="log-entries"></div>
+    </div>
+
+    <script>
+        // ログシステム
+        class OperationLogger {
+            constructor() {
+                this.logs = [];
+                this.logContainer = document.getElementById('log-entries');
+                this.addLog('system', 'GSAP デモを起動しました');
+            }
+
+            addLog(action, details, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString('ja-JP');
+                const logEntry = {
+                    timestamp,
+                    action,
+                    details,
+                    type
+                };
+                
+                this.logs.push(logEntry);
+                this.renderLog(logEntry);
+            }
+
+            renderLog(entry) {
+                const logDiv = document.createElement('div');
+                logDiv.className = 'log-entry';
+                logDiv.innerHTML = `<span style="color: #4facfe; font-weight: bold;">[${entry.timestamp}]</span> <span style="color: #00f2fe;">${entry.action}</span> → ${entry.details}`;
+                this.logContainer.appendChild(logDiv);
+                this.logContainer.scrollTop = this.logContainer.scrollHeight;
+            }
+
+            getFormattedLogs() {
+                return this.logs.map(log => `[${log.timestamp}] ${log.action} → ${log.details}`).join('\n');
+            }
+        }
+
+        const logger = new OperationLogger();
+
+        // GSAP タイムライン
+        let masterTimeline = gsap.timeline({paused: true});
+        let isPlaying = false;
+
+        // アニメーション関数
+        function animateRotate() {
+            gsap.to(".animated-element", {
+                rotation: 360,
+                duration: 2,
+                ease: "power2.inOut",
+                stagger: 0.1
+            });
+            logger.addLog('アニメーション', '回転アニメーションを実行しました');
+        }
+
+        function animateScale() {
+            gsap.to(".animated-element", {
+                scale: 1.5,
+                duration: 1,
+                ease: "elastic.out(1, 0.3)",
+                yoyo: true,
+                repeat: 1,
+                stagger: 0.1
+            });
+            logger.addLog('アニメーション', '拡大縮小アニメーションを実行しました');
+        }
+
+        function animateBounce() {
+            gsap.to(".animated-element", {
+                y: -100,
+                duration: 0.6,
+                ease: "bounce.out",
+                yoyo: true,
+                repeat: 1,
+                stagger: 0.1
+            });
+            logger.addLog('アニメーション', 'バウンスアニメーションを実行しました');
+        }
+
+        function animateStagger() {
+            gsap.fromTo(".animated-element", 
+                {
+                    x: -200,
+                    opacity: 0,
+                    rotation: -180
+                },
+                {
+                    x: 0,
+                    opacity: 1,
+                    rotation: 0,
+                    duration: 1.5,
+                    ease: "back.out(1.7)",
+                    stagger: {
+                        amount: 1,
+                        from: "start"
+                    }
+                }
+            );
+            logger.addLog('アニメーション', '順次アニメーションを実行しました');
+        }
+
+        function animateTimeline() {
+            const tl = gsap.timeline();
+            
+            tl.to("#box1", {x: 200, duration: 1, ease: "power2.out"})
+              .to("#box2", {y: -150, duration: 1, ease: "bounce.out"}, 0.2)
+              .to("#box3", {scale: 2, rotation: 180, duration: 1.5, ease: "elastic.out(1, 0.3)"}, 0.4)
+              .to("#box4", {x: -200, y: 100, duration: 1.2, ease: "power3.inOut"}, 0.6)
+              .to("#box5", {rotation: 720, scale: 0.5, duration: 2, ease: "power2.inOut"}, 0.8);
+            
+            logger.addLog('アニメーション', 'タイムラインアニメーションを実行しました');
+            updateTimelineInfo('再生中');
+            
+            tl.eventCallback("onComplete", () => {
+                updateTimelineInfo('完了');
+            });
+        }
+
+        function animatePhysics() {
+            gsap.to(".animated-element", {
+                x: "random(-300, 300)",
+                y: "random(-200, 200)",
+                rotation: "random(0, 360)",
+                scale: "random(0.5, 1.5)",
+                duration: 2,
+                ease: "power3.out",
+                stagger: {
+                    amount: 0.5,
+                    from: "random"
+                }
+            });
+            logger.addLog('アニメーション', '物理演算風アニメーションを実行しました');
+        }
+
+        function resetElements() {
+            gsap.set(".animated-element", {
+                x: 0,
+                y: 0,
+                rotation: 0,
+                scale: 1,
+                opacity: 1
+            });
+            logger.addLog('リセット', '全要素を初期位置にリセットしました');
+            updateTimelineInfo('停止中');
+        }
+
+        function pauseAll() {
+            gsap.globalTimeline.pause();
+            logger.addLog('制御', '全アニメーションを一時停止しました');
+            updateTimelineInfo('一時停止中');
+        }
+
+        function resumeAll() {
+            gsap.globalTimeline.resume();
+            logger.addLog('制御', '全アニメーションを再開しました');
+            updateTimelineInfo('再生中');
+        }
+
+        function updateTimelineInfo(status) {
+            const timelineInfo = document.getElementById('timeline-info');
+            timelineInfo.textContent = `タイムライン: ${status}`;
+        }
+
+        // ログパネル
+        function toggleLog() {
+            const panel = document.getElementById('log-panel');
+            panel.classList.toggle('active');
+            logger.addLog('ログパネル', panel.classList.contains('active') ? '開きました' : '閉じました');
+        }
+
+        function copyLogs() {
+            const logText = logger.getFormattedLogs();
+            navigator.clipboard.writeText(logText).then(() => {
+                logger.addLog('ログコピー', 'クリップボードにコピーしました');
+            });
+        }
+
+        // マウスフォロー効果
+        document.addEventListener('mousemove', (e) => {
+            gsap.to('.animated-element', {
+                x: (e.clientX - window.innerWidth / 2) * 0.05,
+                y: (e.clientY - window.innerHeight / 2) * 0.05,
+                duration: 0.5,
+                ease: "power2.out",
+                stagger: 0.02
+            });
+        });
+
+        // 初期化時にGSAPの情報をログに記録
+        logger.addLog('GSAP', `バージョン ${gsap.version} を使用しています`);
+    </script>
+</body>
+</html>

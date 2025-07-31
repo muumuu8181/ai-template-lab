@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart.js デモ - Visual JS Patterns</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        #chart-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chart-wrapper {
+            background: rgba(26, 26, 46, 0.5);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(26, 26, 46, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .controls h2 {
+            margin-bottom: 15px;
+            color: #4facfe;
+        }
+
+        button {
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 26, 46, 0.9);
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            color: #4facfe;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .back-button:hover {
+            transform: scale(1.05);
+            background: rgba(79, 172, 254, 0.2);
+        }
+
+        .log-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4facfe;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .log-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: rgba(15, 15, 15, 0.95);
+            border-left: 2px solid #4facfe;
+            transition: right 0.3s ease;
+            z-index: 999;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .log-panel.active {
+            right: 0;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .log-entries {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(79, 172, 254, 0.1);
+            border-radius: 4px;
+            border-left: 3px solid #4facfe;
+        }
+
+        .version-display {
+            position: fixed;
+            top: 20px;
+            right: 80px;
+            background: rgba(26, 26, 46, 0.9);
+            color: #4facfe;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <div class="version-display">v0.5</div>
+    <div id="chart-container">
+        <div class="chart-wrapper">
+            <canvas id="myChart"></canvas>
+        </div>
+    </div>
+
+    <div class="controls">
+        <h2>Chart.js コントロール</h2>
+        
+        <div>
+            <button onclick="changeChartType('bar')">バーチャート</button>
+            <button onclick="changeChartType('line')">ラインチャート</button>
+            <button onclick="changeChartType('pie')">円グラフ</button>
+            <button onclick="changeChartType('doughnut')">ドーナツグラフ</button>
+        </div>
+        
+        <div>
+            <button onclick="updateData()">データ更新</button>
+            <button onclick="addDataset()">データ追加</button>
+            <button onclick="toggleAnimation()">アニメーション</button>
+        </div>
+    </div>
+
+    <a href="index.html" class="back-button">← 戻る</a>
+
+    <button class="log-toggle" onclick="toggleLog()">📋 操作ログ</button>
+
+    <div id="log-panel" class="log-panel">
+        <div class="log-header">
+            <h3>📋 操作ログ</h3>
+            <button onclick="copyLogs()" style="background: #4facfe; color: #000; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer;">コピー</button>
+        </div>
+        <div id="log-entries" class="log-entries"></div>
+    </div>
+
+    <script>
+        // ログシステム
+        class OperationLogger {
+            constructor() {
+                this.logs = [];
+                this.logContainer = document.getElementById('log-entries');
+                this.addLog('system', 'Chart.js デモを起動しました');
+            }
+
+            addLog(action, details, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString('ja-JP');
+                const logEntry = {
+                    timestamp,
+                    action,
+                    details,
+                    type
+                };
+                
+                this.logs.push(logEntry);
+                this.renderLog(logEntry);
+            }
+
+            renderLog(entry) {
+                const logDiv = document.createElement('div');
+                logDiv.className = 'log-entry';
+                logDiv.innerHTML = `<span style="color: #4facfe; font-weight: bold;">[${entry.timestamp}]</span> <span style="color: #00f2fe;">${entry.action}</span> → ${entry.details}`;
+                this.logContainer.appendChild(logDiv);
+                this.logContainer.scrollTop = this.logContainer.scrollHeight;
+            }
+
+            getFormattedLogs() {
+                return this.logs.map(log => `[${log.timestamp}] ${log.action} → ${log.details}`).join('\n');
+            }
+        }
+
+        const logger = new OperationLogger();
+
+        // Chart.js セットアップ
+        const ctx = document.getElementById('myChart').getContext('2d');
+        let myChart;
+        let currentType = 'bar';
+        let animationEnabled = true;
+
+        const data = {
+            labels: ['データ1', 'データ2', 'データ3', 'データ4', 'データ5', 'データ6'],
+            datasets: [{
+                label: 'データセット1',
+                data: [12, 19, 3, 5, 2, 3],
+                backgroundColor: [
+                    'rgba(79, 172, 254, 0.8)',
+                    'rgba(0, 242, 254, 0.8)',
+                    'rgba(79, 172, 254, 0.6)',
+                    'rgba(0, 242, 254, 0.6)',
+                    'rgba(79, 172, 254, 0.4)',
+                    'rgba(0, 242, 254, 0.4)'
+                ],
+                borderColor: [
+                    'rgba(79, 172, 254, 1)',
+                    'rgba(0, 242, 254, 1)',
+                    'rgba(79, 172, 254, 1)',
+                    'rgba(0, 242, 254, 1)',
+                    'rgba(79, 172, 254, 1)',
+                    'rgba(0, 242, 254, 1)'
+                ],
+                borderWidth: 2
+            }]
+        };
+
+        const config = {
+            type: currentType,
+            data: data,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Chart.js デモチャート',
+                        color: '#4facfe',
+                        font: {
+                            size: 18
+                        }
+                    },
+                    legend: {
+                        labels: {
+                            color: '#a0a0a0'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#a0a0a0'
+                        },
+                        grid: {
+                            color: 'rgba(79, 172, 254, 0.2)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#a0a0a0'
+                        },
+                        grid: {
+                            color: 'rgba(79, 172, 254, 0.2)'
+                        }
+                    }
+                },
+                animation: {
+                    duration: animationEnabled ? 1000 : 0
+                }
+            }
+        };
+
+        // チャート作成
+        myChart = new Chart(ctx, config);
+        logger.addLog('チャート初期化', 'バーチャートを作成しました');
+
+        // コントロール関数
+        function changeChartType(type) {
+            myChart.destroy();
+            currentType = type;
+            
+            // パイチャートとドーナツチャートの場合はスケールを削除
+            if (type === 'pie' || type === 'doughnut') {
+                config.options.scales = {};
+            } else {
+                config.options.scales = {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#a0a0a0'
+                        },
+                        grid: {
+                            color: 'rgba(79, 172, 254, 0.2)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#a0a0a0'
+                        },
+                        grid: {
+                            color: 'rgba(79, 172, 254, 0.2)'
+                        }
+                    }
+                };
+            }
+            
+            config.type = type;
+            myChart = new Chart(ctx, config);
+            logger.addLog('チャートタイプ変更', `${type}チャートに変更しました`);
+        }
+
+        function updateData() {
+            const newData = data.datasets[0].data.map(() => Math.floor(Math.random() * 20) + 1);
+            data.datasets[0].data = newData;
+            myChart.update();
+            logger.addLog('データ更新', '新しいランダムデータに更新しました');
+        }
+
+        function addDataset() {
+            const newDataset = {
+                label: `データセット${data.datasets.length + 1}`,
+                data: Array.from({length: 6}, () => Math.floor(Math.random() * 20) + 1),
+                backgroundColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 254, 0.8)`,
+                borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 254, 1)`,
+                borderWidth: 2
+            };
+            
+            data.datasets.push(newDataset);
+            myChart.update();
+            logger.addLog('データセット追加', `データセット${data.datasets.length}を追加しました`);
+        }
+
+        function toggleAnimation() {
+            animationEnabled = !animationEnabled;
+            myChart.options.animation.duration = animationEnabled ? 1000 : 0;
+            myChart.update();
+            logger.addLog('アニメーション', animationEnabled ? 'アニメーションを有効にしました' : 'アニメーションを無効にしました');
+        }
+
+        // ログパネル
+        function toggleLog() {
+            const panel = document.getElementById('log-panel');
+            panel.classList.toggle('active');
+            logger.addLog('ログパネル', panel.classList.contains('active') ? '開きました' : '閉じました');
+        }
+
+        function copyLogs() {
+            const logText = logger.getFormattedLogs();
+            navigator.clipboard.writeText(logText).then(() => {
+                logger.addLog('ログコピー', 'クリップボードにコピーしました');
+            });
+        }
+
+        // ウィンドウリサイズ対応
+        window.addEventListener('resize', () => {
+            myChart.resize();
+            logger.addLog('画面リサイズ', 'チャートサイズを調整しました');
+        });
+    </script>
+</body>
+</html>
