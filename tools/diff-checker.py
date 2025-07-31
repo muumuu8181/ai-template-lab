@@ -29,15 +29,23 @@ class DiffChecker:
         
     def create_snapshot(self, source_dir, snapshot_name=None):
         """作業前のスナップショットを作成"""
-        if snapshot_name is None:
-            snapshot_name = f"snapshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        # スナップショット保存先を.ai-monitorに変更
+        monitor_base = Path.home() / '.ai-monitor' / 'snapshots'
+        project_name = Path(source_dir).name
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H%M%S')
+        snapshot_dir = monitor_base / project_name / timestamp
         
-        snapshot_path = Path(source_dir).parent / snapshot_name
-        if snapshot_path.exists():
-            shutil.rmtree(snapshot_path)
+        # 新しいスナップショットを作成
+        snapshot_dir.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(source_dir, snapshot_dir, ignore=shutil.ignore_patterns('.git', '__pycache__', 'diff_reports', 'snapshots'))
         
-        shutil.copytree(source_dir, snapshot_path, ignore=shutil.ignore_patterns('.git', '__pycache__', 'diff_reports', 'snapshots'))
-        return snapshot_path
+        # latestシンボリックリンクを更新
+        latest_link = monitor_base / project_name / 'latest'
+        if latest_link.exists() or latest_link.is_symlink():
+            latest_link.unlink()
+        latest_link.symlink_to(timestamp)
+        
+        return snapshot_dir
     
     def get_file_hash(self, filepath):
         """ファイルのハッシュ値を計算"""
@@ -211,9 +219,12 @@ def main():
         checker = DiffChecker(sys.argv[1], sys.argv[2])
         checker.compare_directories()
         
-        # レポート保存（絶対パスで指定）
-        base_dir = Path(__file__).parent.parent  # ai-template-labディレクトリ
-        report_dir = base_dir / "diff_reports" / datetime.now().strftime('%Y%m%d_%H%M%S')
+        # レポート保存（.ai-monitorに変更）
+        monitor_base = Path.home() / '.ai-monitor' / 'reports'
+        project_name = Path(sys.argv[2]).name
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        time_str = datetime.now().strftime('%H%M%S')
+        report_dir = monitor_base / project_name / date_str / time_str
         checker.save_report(report_dir)
         
         print(f"レポート生成完了: {report_dir}")

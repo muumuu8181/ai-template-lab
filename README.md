@@ -1,10 +1,27 @@
-# AI Template Lab v0.6
+# AI Template Lab v0.7
 
 ## チーム
 - **マネジメントチーム**: ルールを設定する
 - **開発チーム**: 開発を行い、現在のルールに対するフィードバックをマネジメントチームに返す
 
 両チームのフィードバックを反映する仕組みによって、このテンプレートシステムが育っていく。
+
+## 作業記録フォーマット
+
+すべてのAIは以下のフォーマットで作業記録を記載すること：
+
+```
+## YYYY-MM-DD HH:MM:SS JST - 作業タイトル
+- 実施内容1
+- 実施内容2
+- 実施内容3
+```
+
+記録場所：
+- 開発チーム: development/work_history.log
+- ライター: management/writer/work_history.log
+- チェッカー: management/checker/work_history.log
+- レビュワー: management/reviewer/work_history.log
 
 ## 初回セットアップ
 CLAUDE.mdに以下を記載する：
