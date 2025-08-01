@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-AI作業監視用差分チェックツール v0.2
-ファイル構成と行数変化の視覚的レポート機能を追加
+AI作業監視用差分チェックツール
+WinMergeの代替として、ファイルの変更を視覚的に確認
 """
 
 import os
@@ -24,8 +24,7 @@ class DiffChecker:
             "deleted_files": [],
             "modified_files": [],
             "unchanged_files": [],
-            "suspicious_changes": [],
-            "file_details": {}  # 追加：ファイル詳細情報
+            "suspicious_changes": []
         }
         
     def create_snapshot(self, source_dir, snapshot_name=None):
@@ -52,14 +51,6 @@ class DiffChecker:
         """ファイルのハッシュ値を計算"""
         with open(filepath, 'rb') as f:
             return hashlib.sha256(f.read()).hexdigest()
-    
-    def count_lines(self, filepath):
-        """ファイルの行数をカウント"""
-        try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                return len(f.readlines())
-        except:
-            return 0
     
     def compare_directories(self):
         """ディレクトリ間の差分を検出"""
@@ -90,49 +81,7 @@ class DiffChecker:
         # 削除されたファイル
         self.report["deleted_files"] = list(original_files - modified_files)
         
-        # すべてのファイルの詳細情報を収集
-        all_files = original_files | modified_files
-        for file in sorted(all_files):
-            file_info = {
-                "before": {"exists": False, "lines": 0},
-                "after": {"exists": False, "lines": 0},
-                "status": "unchanged"
-            }
-            
-            # Before側の情報
-            if file in original_files:
-                orig_path = self.original_dir / file
-                file_info["before"]["exists"] = True
-                file_info["before"]["lines"] = self.count_lines(orig_path)
-            
-            # After側の情報
-            if file in modified_files:
-                mod_path = self.modified_dir / file
-                file_info["after"]["exists"] = True
-                file_info["after"]["lines"] = self.count_lines(mod_path)
-            
-            # ステータス判定
-            if not file_info["before"]["exists"]:
-                file_info["status"] = "added"
-            elif not file_info["after"]["exists"]:
-                file_info["status"] = "deleted"
-            elif file in original_files and file in modified_files:
-                orig_path = self.original_dir / file
-                mod_path = self.modified_dir / file
-                if self.get_file_hash(orig_path) != self.get_file_hash(mod_path):
-                    file_info["status"] = "modified"
-                    
-                    # 保護されたファイルの変更を検出
-                    protected_files = ['MASTER_RULES.md', 'CLAUDE.md', 'README.md']
-                    if any(protected in file for protected in protected_files):
-                        self.report["suspicious_changes"].append({
-                            "file": file,
-                            "reason": "保護されたファイルが変更されています"
-                        })
-            
-            self.report["file_details"][file] = file_info
-        
-        # 既存のレポート形式も維持
+        # 共通ファイルの変更チェック
         common_files = original_files & modified_files
         for file in common_files:
             orig_path = self.original_dir / file
@@ -140,6 +89,14 @@ class DiffChecker:
             
             if self.get_file_hash(orig_path) != self.get_file_hash(mod_path):
                 self.report["modified_files"].append(file)
+                
+                # 保護されたファイルの変更を検出
+                protected_files = ['MASTER_RULES.md', 'CLAUDE.md', 'README.md']
+                if any(protected in file for protected in protected_files):
+                    self.report["suspicious_changes"].append({
+                        "file": file,
+                        "reason": "保護されたファイルが変更されています"
+                    })
             else:
                 self.report["unchanged_files"].append(file)
     
@@ -165,119 +122,31 @@ class DiffChecker:
     
     def generate_html_report(self):
         """視覚的なHTMLレポートを生成"""
-        # 統計情報の計算
-        total_before = sum(1 for f in self.report["file_details"].values() if f["before"]["exists"])
-        total_after = sum(1 for f in self.report["file_details"].values() if f["after"]["exists"])
-        lines_before = sum(f["before"]["lines"] for f in self.report["file_details"].values())
-        lines_after = sum(f["after"]["lines"] for f in self.report["file_details"].values())
-        
         html = f"""
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AI作業監視レポート v0.2</title>
+    <title>AI作業監視レポート</title>
     <style>
         body {{ font-family: Arial, sans-serif; margin: 20px; }}
         .summary {{ background: #f0f0f0; padding: 15px; border-radius: 5px; }}
-        .added {{ color: green; font-weight: bold; }}
-        .deleted {{ color: red; font-weight: bold; }}
-        .modified {{ color: orange; font-weight: bold; }}
+        .added {{ color: green; }}
+        .deleted {{ color: red; }}
+        .modified {{ color: orange; }}
         .suspicious {{ background: #ffcccc; padding: 10px; margin: 10px 0; }}
         pre {{ background: #f5f5f5; padding: 10px; overflow-x: auto; }}
         .diff-add {{ background: #ccffcc; }}
         .diff-del {{ background: #ffcccc; }}
-        
-        /* ファイル構成テーブル */
-        .file-structure {{ margin: 20px 0; }}
-        .file-structure table {{ 
-            border-collapse: collapse; 
-            width: 100%;
-            font-family: 'Courier New', monospace;
-        }}
-        .file-structure th, .file-structure td {{ 
-            border: 1px solid #ddd; 
-            padding: 8px; 
-            text-align: left;
-        }}
-        .file-structure th {{ 
-            background-color: #f2f2f2; 
-            font-weight: bold;
-        }}
-        .file-structure tr:nth-child(even) {{ background-color: #f9f9f9; }}
-        .file-structure .added-row {{ background-color: #d4edda !important; }}
-        .file-structure .deleted-row {{ background-color: #f8d7da !important; }}
-        .file-structure .modified-row {{ background-color: #fff3cd !important; }}
-        .line-change {{ font-weight: bold; }}
-        .line-increase {{ color: green; }}
-        .line-decrease {{ color: red; }}
     </style>
 </head>
 <body>
-    <h1>AI作業監視レポート v0.2</h1>
+    <h1>AI作業監視レポート</h1>
     <div class="summary">
         <p>実行時刻: {self.report['timestamp']}</p>
-        <h3>ファイル構成サマリー</h3>
-        <p>Before: <strong>{total_before}ファイル</strong> (合計 {lines_before:,}行)</p>
-        <p>After: <strong>{total_after}ファイル</strong> (合計 {lines_after:,}行)</p>
-        <hr>
         <p>追加ファイル: <span class="added">{len(self.report['added_files'])}</span></p>
         <p>削除ファイル: <span class="deleted">{len(self.report['deleted_files'])}</span></p>
         <p>変更ファイル: <span class="modified">{len(self.report['modified_files'])}</span></p>
         <p>未変更ファイル: {len(self.report['unchanged_files'])}</p>
-    </div>
-"""
-        
-        # ファイル構成テーブル
-        html += """
-    <h2>📊 ファイル構成詳細</h2>
-    <div class="file-structure">
-        <table>
-            <tr>
-                <th>ファイル名</th>
-                <th>Before (行数)</th>
-                <th>After (行数)</th>
-                <th>変化</th>
-                <th>ステータス</th>
-            </tr>
-"""
-        
-        for filename in sorted(self.report["file_details"].keys()):
-            details = self.report["file_details"][filename]
-            
-            # 行数変化の計算
-            line_change = details["after"]["lines"] - details["before"]["lines"]
-            if line_change > 0:
-                change_text = f'<span class="line-change line-increase">+{line_change}</span>'
-            elif line_change < 0:
-                change_text = f'<span class="line-change line-decrease">{line_change}</span>'
-            else:
-                change_text = '-'
-            
-            # ステータスに応じた行のクラス
-            row_class = ""
-            if details["status"] == "added":
-                row_class = "added-row"
-            elif details["status"] == "deleted":
-                row_class = "deleted-row"
-            elif details["status"] == "modified":
-                row_class = "modified-row"
-            
-            # Before/After の表示
-            before_text = f'{details["before"]["lines"]:,}' if details["before"]["exists"] else '-'
-            after_text = f'{details["after"]["lines"]:,}' if details["after"]["exists"] else '-'
-            
-            html += f"""
-            <tr class="{row_class}">
-                <td>{filename}</td>
-                <td style="text-align: right;">{before_text}</td>
-                <td style="text-align: right;">{after_text}</td>
-                <td style="text-align: center;">{change_text}</td>
-                <td><span class="{details['status']}">{details['status']}</span></td>
-            </tr>
-"""
-        
-        html += """
-        </table>
     </div>
 """
         
@@ -350,11 +219,12 @@ def main():
         checker = DiffChecker(sys.argv[1], sys.argv[2])
         checker.compare_directories()
         
-        # レポート保存（プロジェクト内に変更）
-        project_dir = Path(sys.argv[2])
+        # レポート保存（.ai-monitorに変更）
+        monitor_base = Path.home() / '.ai-monitor' / 'reports'
+        project_name = Path(sys.argv[2]).name
         date_str = datetime.now().strftime('%Y-%m-%d')
         time_str = datetime.now().strftime('%H%M%S')
-        report_dir = project_dir / 'management' / 'checker' / 'reports' / date_str / time_str
+        report_dir = monitor_base / project_name / date_str / time_str
         checker.save_report(report_dir)
         
         print(f"レポート生成完了: {report_dir}")

@@ -1,0 +1,177 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>プロンプト・作業履歴対応チェックレポート</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .summary { background: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .compliant { color: green; font-weight: bold; }
+        .non-compliant { color: red; font-weight: bold; }
+        .team-section { margin: 20px 0; padding: 10px; border-left: 4px solid #ddd; }
+        .team-compliant { border-left-color: green; background: #f0fff0; }
+        .team-non-compliant { border-left-color: red; background: #fff0f0; }
+        .issues { background: #ffeeee; padding: 10px; margin: 10px 0; }
+        table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>プロンプト・作業履歴対応チェックレポート</h1>
+    
+    <div class="summary">
+        <h2>📊 サマリー</h2>
+        <p>実行時刻: 2025-08-01T09:34:59.780002</p>
+        <p>対象チーム: <strong>4</strong>チーム</p>
+        <p>適合チーム: <span class="compliant">0</span></p>
+        <p>非適合チーム: <span class="non-compliant">4</span></p>
+    </div>
+
+    <div class="issues">
+        <h2>⚠️ 検出された問題</h2>
+        <ul>
+<li>開発チーム: prompt.txt が存在しません</li><li>開発チーム: 両ファイルともエントリがありません</li><li>マネジメント・ライター: エントリ数不一致: 作業履歴25件 vs プロンプト8件</li><li>マネジメント・チェッカー: prompt.txt が存在しません</li><li>マネジメント・チェッカー: エントリ数不一致: 作業履歴4件 vs プロンプト0件</li><li>マネジメント・レビュワー: エントリ数不一致: 作業履歴0件 vs プロンプト2件</li>
+        </ul>
+    </div>
+
+    <h2>📋 チーム別詳細</h2>
+
+    <div class="team-section team-non-compliant">
+        <h3>開発チーム - ❌ 非適合</h3>
+        <table>
+            <tr>
+                <th>項目</th>
+                <th>値</th>
+            </tr>
+            <tr>
+                <td>work_history.log エントリ数</td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>prompt.txt エントリ数</td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>work_history.log 存在</td>
+                <td>✅</td>
+            </tr>
+            <tr>
+                <td>prompt.txt 存在</td>
+                <td>❌</td>
+            </tr>
+        </table>
+
+        <div class="issues">
+            <strong>問題点:</strong>
+            <ul>
+<li>prompt.txt が存在しません</li><li>両ファイルともエントリがありません</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="team-section team-non-compliant">
+        <h3>マネジメント・ライター - ❌ 非適合</h3>
+        <table>
+            <tr>
+                <th>項目</th>
+                <th>値</th>
+            </tr>
+            <tr>
+                <td>work_history.log エントリ数</td>
+                <td>25</td>
+            </tr>
+            <tr>
+                <td>prompt.txt エントリ数</td>
+                <td>8</td>
+            </tr>
+            <tr>
+                <td>work_history.log 存在</td>
+                <td>✅</td>
+            </tr>
+            <tr>
+                <td>prompt.txt 存在</td>
+                <td>✅</td>
+            </tr>
+        </table>
+
+        <div class="issues">
+            <strong>問題点:</strong>
+            <ul>
+<li>エントリ数不一致: 作業履歴25件 vs プロンプト8件</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="team-section team-non-compliant">
+        <h3>マネジメント・チェッカー - ❌ 非適合</h3>
+        <table>
+            <tr>
+                <th>項目</th>
+                <th>値</th>
+            </tr>
+            <tr>
+                <td>work_history.log エントリ数</td>
+                <td>4</td>
+            </tr>
+            <tr>
+                <td>prompt.txt エントリ数</td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>work_history.log 存在</td>
+                <td>✅</td>
+            </tr>
+            <tr>
+                <td>prompt.txt 存在</td>
+                <td>❌</td>
+            </tr>
+        </table>
+
+        <div class="issues">
+            <strong>問題点:</strong>
+            <ul>
+<li>prompt.txt が存在しません</li><li>エントリ数不一致: 作業履歴4件 vs プロンプト0件</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="team-section team-non-compliant">
+        <h3>マネジメント・レビュワー - ❌ 非適合</h3>
+        <table>
+            <tr>
+                <th>項目</th>
+                <th>値</th>
+            </tr>
+            <tr>
+                <td>work_history.log エントリ数</td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>prompt.txt エントリ数</td>
+                <td>2</td>
+            </tr>
+            <tr>
+                <td>work_history.log 存在</td>
+                <td>✅</td>
+            </tr>
+            <tr>
+                <td>prompt.txt 存在</td>
+                <td>✅</td>
+            </tr>
+        </table>
+
+        <div class="issues">
+            <strong>問題点:</strong>
+            <ul>
+<li>エントリ数不一致: 作業履歴0件 vs プロンプト2件</li>
+            </ul>
+        </div>
+
+    </div>
+
+</body>
+</html>

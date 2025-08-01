@@ -1,4 +1,4 @@
-# AI Template Lab v0.7
+# AI Template Lab v0.8
 
 ## チーム
 - **マネジメントチーム**: ルールを設定する
@@ -22,6 +22,23 @@
 - ライター: management/writer/work_history.log
 - チェッカー: management/checker/work_history.log
 - レビュワー: management/reviewer/work_history.log
+
+## v0.8の主な変更点
+
+### Phase 4: 管理ファイル整理完了
+- RULES.md等の管理文書をmanagement/フォルダに移動
+- トップレベルファイル構造をシンプル化
+- RULES_PATH.mdで移動先案内を提供
+
+### 監視体制の強化
+- tools/prompt-history-checker.py による自動監視開始
+- プロンプト・作業履歴の1対1対応チェック
+- 定期実行スケジュール（日次21:00、週次月曜、バージョンアップ前）
+- HTML/JSON/TXT形式での詳細レポート生成
+
+### 重要なパス変更
+- RULES.md → management/RULES.md
+- その他管理文書もmanagement/配下に集約
 
 ## 初回セットアップ
 CLAUDE.mdに以下を記載する：

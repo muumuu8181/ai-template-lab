@@ -1,0 +1,68 @@
+{
+  "timestamp": "2025-08-01T10:17:03.213031",
+  "teams": {
+    "開発チーム": {
+      "work_history_count": 0,
+      "prompt_count": 0,
+      "files_exist": {
+        "work_history.log": true,
+        "prompt.txt": false
+      },
+      "compliance": false,
+      "issues": [
+        "prompt.txt が存在しません",
+        "両ファイルともエントリがありません"
+      ]
+    },
+    "マネジメント・ライター": {
+      "work_history_count": 31,
+      "prompt_count": 15,
+      "files_exist": {
+        "work_history.log": true,
+        "prompt.txt": true
+      },
+      "compliance": false,
+      "issues": [
+        "エントリ数不一致: 作業履歴31件 vs プロンプト15件"
+      ]
+    },
+    "マネジメント・チェッカー": {
+      "work_history_count": 5,
+      "prompt_count": 0,
+      "files_exist": {
+        "work_history.log": true,
+        "prompt.txt": false
+      },
+      "compliance": false,
+      "issues": [
+        "prompt.txt が存在しません",
+        "エントリ数不一致: 作業履歴5件 vs プロンプト0件"
+      ]
+    },
+    "マネジメント・レビュワー": {
+      "work_history_count": 0,
+      "prompt_count": 4,
+      "files_exist": {
+        "work_history.log": true,
+        "prompt.txt": true
+      },
+      "compliance": false,
+      "issues": [
+        "エントリ数不一致: 作業履歴0件 vs プロンプト4件"
+      ]
+    }
+  },
+  "summary": {
+    "total_teams": 4,
+    "compliant_teams": 0,
+    "non_compliant_teams": 4,
+    "issues": [
+      "開発チーム: prompt.txt が存在しません",
+      "開発チーム: 両ファイルともエントリがありません",
+      "マネジメント・ライター: エントリ数不一致: 作業履歴31件 vs プロンプト15件",
+      "マネジメント・チェッカー: prompt.txt が存在しません",
+      "マネジメント・チェッカー: エントリ数不一致: 作業履歴5件 vs プロンプト0件",
+      "マネジメント・レビュワー: エントリ数不一致: 作業履歴0件 vs プロンプト4件"
+    ]
+  }
+}

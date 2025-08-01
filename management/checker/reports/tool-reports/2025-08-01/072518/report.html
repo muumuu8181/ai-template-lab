@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI作業監視レポート</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .summary { background: #f0f0f0; padding: 15px; border-radius: 5px; }
+        .added { color: green; }
+        .deleted { color: red; }
+        .modified { color: orange; }
+        .suspicious { background: #ffcccc; padding: 10px; margin: 10px 0; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        .diff-add { background: #ccffcc; }
+        .diff-del { background: #ffcccc; }
+    </style>
+</head>
+<body>
+    <h1>AI作業監視レポート</h1>
+    <div class="summary">
+        <p>実行時刻: 2025-08-01T07:25:18.606934</p>
+        <p>追加ファイル: <span class="added">0</span></p>
+        <p>削除ファイル: <span class="deleted">2</span></p>
+        <p>変更ファイル: <span class="modified">6</span></p>
+        <p>未変更ファイル: 12</p>
+    </div>
+<h2>⚠️ 要確認事項</h2><div class="suspicious">README.md: 保護されたファイルが変更されています</div><h2>削除されたファイル</h2><ul><li class="deleted">feedback.txt</li><li class="deleted">work_history.log</li></ul><h2>変更されたファイル</h2><h3>RULES.md</h3><pre>--- original/RULES.md
++++ modified/RULES.md
+@@ -3,7 +3,7 @@
+ ## 全AI共通ルール
+
+ **毎回作業開始時に自分の役割専用ルールファイルを読み直すこと**
+
+ - 開発チーム: development/DEV_RULES.md（作成予定）
+
+-- ライター: management/writer/WRITER_RULES.md
+
++- ライター: management/writer/WRITER_RULES.md（作成済み）
+
+ - チェッカー: management/checker/CHECKER_RULES.md（作成予定）
+
+ - レビュワー: management/reviewer/REVIEWER_RULES.md（作成予定）
+
+ 
+</pre><h3>development/work_history.log</h3><pre>--- original/development/work_history.log
++++ modified/development/work_history.log
+@@ -1,6 +1,6 @@
+ # 開発チーム作業記録
+
+ 
+
+ 開発チームの作業を時系列で記録する。
+
+-フォーマット: YYYY-MM-DD HH:MM:SS JST - 作業内容
+
++フォーマット: ## YYYY-MM-DD HH:MM:SS JST - 作業タイトル
+
+ 
+
+ ## 作業記録</pre><h3>management/reviewer/work_history.log</h3><pre>--- original/management/reviewer/work_history.log
++++ modified/management/reviewer/work_history.log
+@@ -1,6 +1,7 @@
+ # レビュワー作業記録
+
+ 
+
+ マネジメントチーム・レビュワーの作業を記録する。
+
++フォーマット: ## YYYY-MM-DD HH:MM:SS JST - 作業タイトル
+
+ 
+
+ ## 作業記録
+
+ 
+</pre><h3>management/checker/work_history.log</h3><pre>--- original/management/checker/work_history.log
++++ modified/management/checker/work_history.log
+@@ -1,5 +1,6 @@
+ # チェッカー作業記録
+
+ 
+
+ マネジメントチーム・チェッカーの作業を記録する。
+
++フォーマット: ## YYYY-MM-DD HH:MM:SS JST - 作業タイトル
+
+ 
+
+ ## 作業記録</pre><h3>README.md</h3><pre>--- original/README.md
++++ modified/README.md
+@@ -5,6 +5,23 @@
+ - **開発チーム**: 開発を行い、現在のルールに対するフィードバックをマネジメントチームに返す
+
+ 
+
+ 両チームのフィードバックを反映する仕組みによって、このテンプレートシステムが育っていく。
+
++
+
++## 作業記録フォーマット
+
++
+
++すべてのAIは以下のフォーマットで作業記録を記載すること：
+
++
+
++```
+
++## YYYY-MM-DD HH:MM:SS JST - 作業タイトル
+
++- 実施内容1
+
++- 実施内容2
+
++- 実施内容3
+
++```
+
++
+
++記録場所：
+
++- 開発チーム: development/work_history.log
+
++- ライター: management/writer/work_history.log
+
++- チェッカー: management/checker/work_history.log
+
++- レビュワー: management/reviewer/work_history.log
+
+ 
+
+ ## 初回セットアップ
+
+ CLAUDE.mdに以下を記載する：
+</pre><h3>management/writer/work_history.log</h3><pre>--- original/management/writer/work_history.log
++++ modified/management/writer/work_history.log
+@@ -1,6 +1,7 @@
+ # ライター作業記録
+
+ 
+
+ マネジメントチーム・ライターの作業を記録する。
+
++フォーマット: ## YYYY-MM-DD HH:MM:SS JST - 作業タイトル
+
+ 
+
+ ## 2025-07-31 23:30:00 JST - 役割別フォルダ構成の実装
+
+ - management/writer, checker, reviewer フォルダを作成
+
+@@ -10,4 +11,27 @@
+ ## 2025-07-31 23:55:00 JST - 役割別ルールファイル作成
+
+ - WRITER_RULES.mdを作成（ライター専用ルール）
+
+ - 他役割フォルダへの書き込み禁止を明記
+
+-- RULES.mdに「毎回ルール確認」を追加（v0.3）
++- RULES.mdに「毎回ルール確認」を追加（v0.3）
+
++
+
++## 2025-07-31 21:50:00 JST - マネジメントチーム フィードバック
+
++### 問題点
+
++- ai-template-appsリポジトリをai-template-lab内にクローンしてしまった
+
++- 別リポジトリのコンテンツを内部に持ち込むのは不適切
+
++### 対応
+
++- ai-template-apps/を削除
+
++- 今後は別リポジトリは別の場所で管理すること
+
++### 教訓
+
++- リポジトリ間の境界を明確に保つ
+
++- 異なるプロジェクトは混在させない
+
++
+
++## 2025-07-31 23:15:00 JST - バージョン更新履歴
+
++### v0.5 → v0.6
+
++- **変更内容**: PERMISSIONS.md追加
+
++- **目的**: 権限管理の明確化
+
++- **影響**: 開発チームとマネジメントチームの編集可能ファイルを明文化
+
++- **実施者**: マネジメントチーム・ライター
+
++
+
++## 2025-08-01 00:20:00 JST - 旧ファイルの整理
+
++- work_history.logの内容をmanagement/writer/work_history.logに移行
+
++- feedback.txt（空）を削除
+
++- トップレベルをクリーンアップ</pre></body></html>
